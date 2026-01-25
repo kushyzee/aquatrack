@@ -1,15 +1,10 @@
 'use client'
 
 import { useForm } from "@tanstack/react-form"
-import * as z from "zod"
-import { Field, FieldContent, FieldError, FieldLabel } from "../ui/field"
-import { Input } from "../ui/input"
-import { loginFormFields } from "@/lib/constants"
-
-const loginSchema = z.object({
-  email: z.email({ error: "Invalid email address" }),
-  password: z.string().trim().min(8, { error: "Password must be at least 8 characters long" })
-})
+import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { loginFormFields, loginSchema } from "@/lib/constants"
+import { loginAction } from "../actions"
 
 export default function LoginForm() {
   const form = useForm({
@@ -21,11 +16,17 @@ export default function LoginForm() {
       email: "",
       password: "",
     },
-    onSubmit: ({ value, formApi }) => {
+    onSubmit: async ({ value, formApi }) => {
+      const result = await loginAction(value)
+
+      if (!result.success) {
+        console.log("there is an error with the form");
+        // TODO: provide better ux for error
+      }
+
       console.log(value)
       formApi.reset()
     },
-
   })
 
   return (

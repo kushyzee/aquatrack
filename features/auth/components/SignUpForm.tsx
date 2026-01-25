@@ -1,30 +1,16 @@
 'use client'
 
 import { useForm } from "@tanstack/react-form"
-import * as z from "zod"
-import { Field, FieldContent, FieldError, FieldLabel } from "../ui/field"
-import { Input } from "../ui/input"
-import { signUpFormFields } from "@/lib/constants"
-
-const signUpSchema = z.object({
-  name: z.string().trim().min(1, { error: "Name is required" }),
-  email: z.email({ error: "Invalid email address" }),
-  password: z.string().trim().min(8, { error: "Password must be at least 8 characters long" })
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
-  confirmPassword: z.string()
-})
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Passwords do not match",
-  })
+import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { signUpFormFields, signUpSchema } from "@/lib/constants"
+import { signUpAction } from "../actions"
 
 export default function SignUpForm() {
   const form = useForm({
     validators: {
       onChange: signUpSchema,
-      onSubmit: signUpSchema
+      // onSubmit: signUpSchema,
     },
     defaultValues: {
       name: "",
@@ -32,18 +18,24 @@ export default function SignUpForm() {
       password: "",
       confirmPassword: "",
     },
-    onSubmit: ({ value, formApi }) => {
+    onSubmit: async ({ value, formApi }) => {
+      const result = await signUpAction(value)
+
+      if (!result.success) {
+        console.log("there is an error with the form");
+        // TODO: provide better ux for error
+      }
+
       console.log(value)
       formApi.reset()
     },
   })
 
-  
 
   return (
     <form id="signup" onSubmit={(e) => {
       e.preventDefault()
-      form.handleSubmit()
+      void form.handleSubmit()
     }} className="space-y-5">
       {signUpFormFields.map(fieldItem => (
         <form.Field key={fieldItem.name}
@@ -74,7 +66,6 @@ export default function SignUpForm() {
           }}
         />
       ))}
-
     </form>
   )
 }

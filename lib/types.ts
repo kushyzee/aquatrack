@@ -1,14 +1,38 @@
+export type SignUpFormFieldNamesType =
+  | "name"
+  | "email"
+  | "password"
+  | "confirmPassword";
+export type LoginFormFieldNamesType = "email" | "password";
 type AuthFormFieldsType = {
-  label: "Name" | "Email" | "Password" | "Confirm Password"
-  type: "email" | "text" | "password"
-  placeholder?: string
+  label: "Name" | "Email" | "Password" | "Confirm Password";
+  type: "email" | "text" | "password";
+  placeholder?: string;
+};
+export type SignUpFormFieldsType = (AuthFormFieldsType & {
+  name: SignUpFormFieldNamesType;
+})[];
+export type LoginFormFieldsType = (AuthFormFieldsType & {
+  name: LoginFormFieldNamesType;
+})[];
+
+export interface LoginFormDataType {
+  email: string;
+  password: string;
 }
 
-export type SignUpFormFieldsType = (AuthFormFieldsType &
-{
-  name: "name" | "email" | "password" | "confirmPassword"
-})[]
+export interface SignUpFormDataType extends LoginFormDataType {
+  name: string;
+  confirmPassword: string;
+}
 
-export type LoginFormFieldsType = (AuthFormFieldsType & {
-  name: "email" | "password"
-})[]
+export interface AuthPageWrapperProps {
+  title: string;
+  description: string;
+  buttonText: "Create Account" | "Sign in";
+  footerText: "Already" | "Don't";
+  linkText: "Log in" | "Create one";
+  href: "/login" | "/signup";
+  formId: "signup" | "login";
+  children: React.ReactNode;
+}
