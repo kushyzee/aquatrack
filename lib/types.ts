@@ -34,5 +34,6 @@ export interface AuthPageWrapperProps {
   linkText: "Log in" | "Create one";
   href: "/login" | "/signup";
   formId: "signup" | "login";
+  submitting: boolean;
   children: React.ReactNode;
 }

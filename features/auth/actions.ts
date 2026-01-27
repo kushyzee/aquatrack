@@ -1,24 +1,40 @@
 "use server";
 
-import * as z from "zod";
-
 import { loginSchema, signUpSchema } from "@/lib/constants";
-import {
-  LoginFormDataType,
-  SignUpFormDataType,
-  SignUpFormFieldNamesType,
-} from "@/lib/types";
+import { LoginFormDataType, SignUpFormDataType } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { type AuthError } from "@supabase/supabase-js";
+
+const getErrorObject = (errorType: string, error?: AuthError) => {
+  let errorObject = {
+    success: false,
+    error: "",
+  };
+
+  if (errorType === "zodValidation") {
+    errorObject.error = "Invalid input";
+    return errorObject;
+  }
+
+  if (errorType === "supabase") {
+    errorObject.error = "An error occurred. Please try again.";
+
+    if (error?.message.includes("Invalid login")) {
+      errorObject.error = "Invalid login credentials";
+    } else if (error?.message.includes("already registered")) {
+      errorObject.error = "User already registered";
+    }
+
+    return errorObject;
+  }
+};
 
 export async function signUpAction(data: SignUpFormDataType) {
   const result = signUpSchema.safeParse(data);
 
   if (!result.success) {
-    return {
-      success: false,
-      errors: z.treeifyError(result.error),
-    };
+    return getErrorObject("zodValidation");
   }
 
   const { email, password, name } = data;
@@ -36,12 +52,8 @@ export async function signUpAction(data: SignUpFormDataType) {
   });
 
   if (error) {
-    return {
-      success: false,
-      errors: {
-        email: error.message,
-      },
-    };
+    console.log(error);
+    return getErrorObject("supabase", error);
   }
 
   console.log(user);
@@ -52,10 +64,7 @@ export async function loginAction(data: LoginFormDataType) {
   const result = loginSchema.safeParse(data);
 
   if (!result.success) {
-    return {
-      success: false,
-      errors: z.treeifyError(result.error),
-    };
+    return getErrorObject("zodValidation");
   }
 
   const { email, password } = data;
@@ -68,12 +77,9 @@ export async function loginAction(data: LoginFormDataType) {
   });
 
   if (error) {
-    return {
-      success: false,
-      errors: {
-        email: error.message,
-      },
-    };
+    console.log(error);
+
+    return getErrorObject("supabase", error);
   }
 
   console.log(user);

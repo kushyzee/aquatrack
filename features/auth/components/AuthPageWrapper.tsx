@@ -4,7 +4,8 @@ import logo from "@/app/icon.svg";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { AuthPageWrapperProps } from "@/lib/types";
-export default function AuthPageWrapper({ title, description, buttonText, footerText, linkText, href, formId, children }: AuthPageWrapperProps) {
+import { Spinner } from "@/components/ui/spinner";
+export default function AuthPageWrapper({ title, description, buttonText, footerText, linkText, href, formId, submitting, children }: AuthPageWrapperProps) {
   return (
     <Card className="max-w-sm w-full mx-auto">
       <CardHeader className="flex flex-col items-center">
@@ -23,7 +24,7 @@ export default function AuthPageWrapper({ title, description, buttonText, footer
         {children}
       </CardContent>
       <CardFooter className="flex-col gap-2">
-        <Button size="lg" type="submit" form={formId} className="w-full">{buttonText}</Button>
+        <Button size="lg" type="submit" disabled={submitting} form={formId} className="w-full">{submitting ? <p className="inline-flex items-center gap-2"><Spinner /> Loading...</p> : buttonText}</Button>
         <p className="text-muted-foreground">{`${footerText} have an account?`} <Link className="text-primary font-semibold" href={href}>{linkText}</Link></p>
       </CardFooter>
     </Card>

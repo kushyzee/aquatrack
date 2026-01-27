@@ -1,12 +1,16 @@
-'use client'
-
-import { useForm } from "@tanstack/react-form"
+import { GlobalFormValidationError, useForm, useStore } from "@tanstack/react-form"
 import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { signUpFormFields, signUpSchema } from "@/lib/constants"
 import { signUpAction } from "../actions"
+import { Dispatch, SetStateAction, useState } from "react"
 
-export default function SignUpForm() {
+interface SignUpFormProps {
+  setSubmitting: Dispatch<SetStateAction<boolean>>
+}
+export default function SignUpForm({ setSubmitting }: SignUpFormProps) {
+  const [error, setError] = useState<string | undefined>("")
+
   const form = useForm({
     validators: {
       onChange: signUpSchema,
@@ -19,15 +23,17 @@ export default function SignUpForm() {
       confirmPassword: "",
     },
     onSubmit: async ({ value, formApi }) => {
+      setSubmitting(true)
+
       const result = await signUpAction(value)
 
-      if (!result.success) {
-        console.log("there is an error with the form");
-        // TODO: provide better ux for error
+      if (!result?.success) {
+        console.log(result);
+        setError(result?.error)
       }
 
-      console.log(value)
-      formApi.reset()
+      setSubmitting(false)
+
     },
   })
 
@@ -35,7 +41,7 @@ export default function SignUpForm() {
   return (
     <form id="signup" onSubmit={(e) => {
       e.preventDefault()
-      void form.handleSubmit()
+      form.handleSubmit()
     }} className="space-y-5">
       {signUpFormFields.map(fieldItem => (
         <form.Field key={fieldItem.name}
@@ -66,6 +72,8 @@ export default function SignUpForm() {
           }}
         />
       ))}
+
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </form>
   )
 }

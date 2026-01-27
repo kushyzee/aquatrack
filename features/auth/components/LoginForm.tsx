@@ -1,31 +1,37 @@
-'use client'
-
 import { useForm } from "@tanstack/react-form"
 import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { loginFormFields, loginSchema } from "@/lib/constants"
 import { loginAction } from "../actions"
+import { Dispatch, SetStateAction, useState } from "react"
 
-export default function LoginForm() {
+interface LoginFormProps {
+  setSubmitting: Dispatch<SetStateAction<boolean>>
+}
+
+export default function LoginForm({ setSubmitting }: LoginFormProps) {
+  const [error, setError] = useState<string | undefined>("")
+
   const form = useForm({
     validators: {
       onChange: loginSchema,
-      onSubmit: loginSchema
     },
     defaultValues: {
       email: "",
       password: "",
     },
-    onSubmit: async ({ value, formApi }) => {
+    onSubmit: async ({ value }) => {
+      setSubmitting(true)
+
       const result = await loginAction(value)
 
-      if (!result.success) {
-        console.log("there is an error with the form");
+      if (!result?.success) {
         // TODO: provide better ux for error
+        console.log(result);
+        setError(result?.error)
       }
 
-      console.log(value)
-      formApi.reset()
+      setSubmitting(false)
     },
   })
 
@@ -37,6 +43,11 @@ export default function LoginForm() {
       {loginFormFields.map(fieldItem => (
         <form.Field key={fieldItem.name}
           name={fieldItem.name}
+          listeners={{
+            onChange: () => {
+              setError(undefined)
+            }
+          }}
           children={(field) => {
             const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
 
@@ -63,7 +74,7 @@ export default function LoginForm() {
           }}
         />
       ))}
-
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </form>
   )
 }
