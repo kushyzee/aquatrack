@@ -15,7 +15,7 @@ export default function Header() {
   });
 
   return (
-    <div className="mb-4 flex items-center justify-between rounded-md bg-white px-4 py-3 shadow-md">
+    <header className="mb-4 flex items-center justify-between rounded-md bg-white px-4 py-3 shadow-md">
       <div className="flex items-center gap-3">
         <SidebarTrigger />
         <h1 className="font-bold">{pageTitle}</h1>
@@ -24,6 +24,6 @@ export default function Header() {
         <User className="size-4" />
         <ChevronDown className="size-4" />
       </div>
-    </div>
+    </header>
   );
 }

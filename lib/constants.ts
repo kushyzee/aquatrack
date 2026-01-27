@@ -1,5 +1,6 @@
 import { LoginFormFieldsType, SignUpFormFieldsType } from "./types";
 import * as z from "zod";
+import { Container, Layers, LayoutDashboard, NotebookPen } from "lucide-react";
 
 export const signUpFormFields: SignUpFormFieldsType = [
   {
@@ -70,9 +71,21 @@ export const navMenu = [
   {
     name: "Dashboard",
     href: "/",
+    icon: LayoutDashboard,
   },
   {
     name: "Ponds",
     href: "/ponds",
+    icon: Layers,
+  },
+  {
+    name: "Daily Logs",
+    href: "/daily-logs",
+    icon: NotebookPen,
+  },
+  {
+    name: "Harvests",
+    href: "/harvests",
+    icon: Container,
   },
 ];

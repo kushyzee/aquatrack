@@ -1,13 +1,6 @@
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import Header from "@/features/layout/components/Header";
-import { navMenu } from "@/lib/constants";
-import Link from "next/link";
+import AppSidebar from "@/features/layout/components/AppSidebar";
 
 export default function AdminLayout({
   children,
@@ -16,17 +9,7 @@ export default function AdminLayout({
 }) {
   return (
     <SidebarProvider>
-      <Sidebar>
-        <SidebarContent>
-          <SidebarMenu className="p-4">
-            {navMenu.map((item) => (
-              <SidebarMenuItem key={item.name}>
-                <Link href={item.href}>{item.name}</Link>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
+      <AppSidebar />
       <div className="w-full p-5">
         <Header />
         {children}
