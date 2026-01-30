@@ -5,7 +5,7 @@ export default function Page() {
   return (
     <div>
       <Analytics />
-      <div>
+      <div className="mt-7 space-y-7">
         <AttentionRequired />
       </div>
     </div>

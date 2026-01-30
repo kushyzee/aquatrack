@@ -12,7 +12,7 @@ export default function AttentionCard({
   return (
     <div className="flex items-center justify-between rounded-md bg-red-100 px-4 py-3">
       <p>{pondName}</p>
-      <Badge variant="destructive">{deathCount} deaths</Badge>
+      <Badge className="bg-destructive">{deathCount} deaths</Badge>
     </div>
   );
 }
