@@ -12,7 +12,7 @@ export default function AdminLayout({
       <AppSidebar />
       <div className="w-full p-5">
         <Header />
-        {children}
+        <main className="mt-7">{children}</main>
       </div>
     </SidebarProvider>
   );
