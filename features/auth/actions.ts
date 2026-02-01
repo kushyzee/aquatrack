@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { type AuthError } from "@supabase/supabase-js";
 
 const getErrorObject = (errorType: string, error?: AuthError) => {
-  let errorObject = {
+  const errorObject = {
     success: false,
     error: "",
   };
