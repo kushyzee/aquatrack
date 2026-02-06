@@ -1,14 +1,19 @@
 import { AlertTriangle, Box, Container, GripHorizontal } from "lucide-react";
 import AnalyticCard from "./AnalyticCard";
+import { getTotalFishInFarm } from "../data";
 
-export default function Analytics() {
+export default async function Analytics() {
+  const result = await getTotalFishInFarm();
+
+  const totalFishInFarm = result?.toLocaleString();
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <AnalyticCard
         Icon={GripHorizontal}
         colour="sky"
         description="Total Fish in Farm"
-        figure="4,760"
+        figure={totalFishInFarm || "0"}
       />
       <AnalyticCard
         Icon={Box}
