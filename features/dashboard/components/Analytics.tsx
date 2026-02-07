@@ -1,35 +1,34 @@
 import { AlertTriangle, Box, Container, GripHorizontal } from "lucide-react";
 import AnalyticCard from "./AnalyticCard";
-import {
-  getHarvestData,
-  getRecentFeedQuantity,
-  getRecentMortality,
-  getTotalFishInFarm,
-} from "../data";
+import { getDashboardMetrics } from "../data";
 
 export default async function Analytics() {
-  const totalFishResult = await getTotalFishInFarm();
-  const totalFishInFarm = totalFishResult?.toLocaleString();
+  const { feedUsed, harvestMtd, mortality, totalFishInFarm } =
+    await getDashboardMetrics();
 
-  const recentFeedResult = await getRecentFeedQuantity();
-  const totalFeedUsed =
-    (recentFeedResult
-      ?.reduce((total, entry) => total + (entry.quantity_kg || 0), 0)
-      .toFixed(1) || "0.0") + " kg";
+  const { feed7d } = feedUsed;
+  const { kg: harvestKg } = harvestMtd;
+  const { mortality7d } = mortality;
 
-  const recentMortalityResult = await getRecentMortality();
-  const totalMortality =
-    recentMortalityResult
-      ?.reduce((total, entry) => total + (entry.count || 0), 0)
-      .toLocaleString() || "0";
+  const totalFish = totalFishInFarm?.toLocaleString("en-US") ?? "0";
 
-  const harvestData = await getHarvestData();
+  const totalFeedUsed7d =
+    feed7d.toLocaleString("en-US", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+      style: "unit",
+      unit: "kilogram",
+    }) ?? "0 kg";
+
+  const totalMortality = mortality7d.toLocaleString("en-US") ?? "0";
+
   const totalHarvest =
-    (harvestData
-      ?.reduce((total, entry) => total + (entry.quantity_kg || 0), 0)
-      .toFixed(1) || "0.0") + " kg";
-
-  console.log(totalHarvest);
+    harvestKg.toLocaleString("en-US", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+      style: "unit",
+      unit: "kilogram",
+    }) ?? "0 kg";
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -37,13 +36,13 @@ export default async function Analytics() {
         Icon={GripHorizontal}
         colour="sky"
         description="Total Fish in Farm"
-        figure={totalFishInFarm || "0"}
+        figure={totalFish}
       />
       <AnalyticCard
         Icon={Box}
         colour="neutral"
         description="Total Feed Used"
-        figure={totalFeedUsed}
+        figure={totalFeedUsed7d}
         duration="Last 7 days"
       />
       <AnalyticCard

@@ -58,7 +58,7 @@ export default function Header({ userData }: HeaderProps) {
           sideOffset={18}
           side="bottom"
           alignOffset={-15}
-          className="w-auto"
+          className="w-auto min-w-52"
         >
           <DropdownMenuGroup>
             <DropdownMenuLabel>{userData?.name || "User"}</DropdownMenuLabel>
@@ -80,11 +80,11 @@ export default function Header({ userData }: HeaderProps) {
               >
                 {loading ? (
                   <>
-                    <Spinner /> Logging out...
+                    <Spinner /> Signing out...
                   </>
                 ) : (
                   <>
-                    Logout <LogOut />
+                    Sign out <LogOut />
                   </>
                 )}
               </Button>
