@@ -1,11 +1,35 @@
 import { AlertTriangle, Box, Container, GripHorizontal } from "lucide-react";
 import AnalyticCard from "./AnalyticCard";
-import { getTotalFishInFarm } from "../data";
+import {
+  getHarvestData,
+  getRecentFeedQuantity,
+  getRecentMortality,
+  getTotalFishInFarm,
+} from "../data";
 
 export default async function Analytics() {
-  const result = await getTotalFishInFarm();
+  const totalFishResult = await getTotalFishInFarm();
+  const totalFishInFarm = totalFishResult?.toLocaleString();
 
-  const totalFishInFarm = result?.toLocaleString();
+  const recentFeedResult = await getRecentFeedQuantity();
+  const totalFeedUsed =
+    (recentFeedResult
+      ?.reduce((total, entry) => total + (entry.quantity_kg || 0), 0)
+      .toFixed(1) || "0.0") + " kg";
+
+  const recentMortalityResult = await getRecentMortality();
+  const totalMortality =
+    recentMortalityResult
+      ?.reduce((total, entry) => total + (entry.count || 0), 0)
+      .toLocaleString() || "0";
+
+  const harvestData = await getHarvestData();
+  const totalHarvest =
+    (harvestData
+      ?.reduce((total, entry) => total + (entry.quantity_kg || 0), 0)
+      .toFixed(1) || "0.0") + " kg";
+
+  console.log(totalHarvest);
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -19,21 +43,21 @@ export default async function Analytics() {
         Icon={Box}
         colour="neutral"
         description="Total Feed Used"
-        figure="1.0 kg"
+        figure={totalFeedUsed}
         duration="Last 7 days"
       />
       <AnalyticCard
         Icon={AlertTriangle}
         colour="red"
         description="Total Mortality"
-        figure="260"
+        figure={totalMortality}
         duration="Last 7 days"
       />
       <AnalyticCard
         Icon={Container}
         colour="emerald"
         description="Harvest"
-        figure="0.0 kg"
+        figure={totalHarvest}
         duration="This month"
       />
     </div>
