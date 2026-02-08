@@ -13,7 +13,7 @@ export async function fetchPonds() {
     throw new Error(`Failed to fetch ponds: ${error.message}`);
   }
 
-  await setTimeout(8000); // Simulate network delay
+  await setTimeout(5000); // Simulate network delay
 
   return data;
 }

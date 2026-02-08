@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
+import PondLoadingSkeleton from "@/features/ponds/PondLoadingSkeleton";
 import PondsList from "@/features/ponds/PondsList";
 import { Plus } from "lucide-react";
+import { Suspense } from "react";
 
 export default function PondsPage() {
   return (
@@ -16,7 +18,9 @@ export default function PondsPage() {
           <Plus /> Create Pond
         </Button>
       </div>
-      <PondsList />
+      <Suspense fallback={<PondLoadingSkeleton />}>
+        <PondsList />
+      </Suspense>
     </div>
   );
 }
