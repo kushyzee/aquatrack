@@ -36,7 +36,7 @@ export default function PondCard({ pondData }: { pondData: PondCardProps }) {
       <CardContent>
         <p>Type: {type}</p>
         {isActive && (
-          <p className="text-muted-foreground text-sm"> {species}</p>
+          <p className="text-muted-foreground text-xs"> {species}</p>
         )}
       </CardContent>
     </Card>
