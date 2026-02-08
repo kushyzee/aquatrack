@@ -37,3 +37,11 @@ export interface AuthPageWrapperProps {
   submitting: boolean;
   children: React.ReactNode;
 }
+
+export interface PondCardProps {
+  id: string;
+  name: string;
+  status: "active" | "inactive";
+  species: string | null;
+  type: string;
+}
