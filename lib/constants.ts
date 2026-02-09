@@ -100,6 +100,7 @@ export const newPondFormFields: NewPondFormDataType[] = [
     label: "Pond Name",
     type: "text",
     placeholder: "e.g., Pond 1",
+    isRequired: true,
   },
   {
     name: "initialStock",
@@ -115,19 +116,19 @@ export const newPondFormFields: NewPondFormDataType[] = [
   },
   {
     name: "species",
-    label: "Species (Optional)",
+    label: "Species",
     type: "text",
-    placeholder: "enter species (optional)",
+    placeholder: "e.g., Catfish",
   },
   {
     name: "stockingDate",
-    label: "Stocking Date (Optional)",
+    label: "Stocking Date",
     type: "date",
   },
   {
     name: "description",
-    label: "Description (Optional)",
+    label: "Description",
     type: "text",
-    placeholder: "enter description (optional)",
+    placeholder: "Optional notes about this pond",
   },
 ];

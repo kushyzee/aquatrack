@@ -21,6 +21,7 @@ interface NewPondFormFieldsProps {
   label: string;
   placeholder?: string;
   type: "text" | "number" | "date" | "select";
+  isRequired: boolean;
 }
 
 const selectOptions = [
@@ -36,6 +37,7 @@ export default function NewPondFormFields({
   label,
   placeholder,
   type,
+  isRequired,
 }: NewPondFormFieldsProps) {
   return (
     <form.Field
@@ -75,7 +77,10 @@ export default function NewPondFormFields({
         return (
           <Field data-invalid={isInvalid}>
             <FieldContent>
-              <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {label}{" "}
+                {isRequired && <span className="text-destructive">*</span>}
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}

@@ -6,10 +6,12 @@ import z from "zod";
 import NewPondFormFields from "./NewPondFormFields";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { newPondAction } from "../action";
+import { redirect } from "next/navigation";
 
 const newFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  initialStock: z.number().min(0, "Initial stock must be a positive number"),
+  initialStock: z.string().min(0, "Initial stock must be a positive number"),
   type: z.string(),
   species: z.string(),
   stockingDate: z.string(),
@@ -23,15 +25,44 @@ export default function NewPondForm() {
     },
     defaultValues: {
       name: "",
-      initialStock: 0,
+      initialStock: "0",
       type: "",
       species: "",
       stockingDate: new Date().toISOString().split("T")[0],
       description: "",
     },
     onSubmit: async ({ value, formApi }) => {
-      console.log("Form submitted with values:", value);
-      formApi.reset();
+      if (!value.initialStock) {
+        value.initialStock = "0";
+      } else if (value.type === "") {
+        value.type = "concrete";
+      }
+
+      switch (value.type) {
+        case "concrete":
+          value.type = "Concrete Tank";
+          break;
+        case "earthen":
+          value.type = "Earthen Pond";
+          break;
+        case "plastic":
+          value.type = "Plastic Tank";
+          break;
+        case "tarpaulin":
+          value.type = "Tarpaulin Tank";
+          break;
+        default:
+          break;
+      }
+
+      const result = await newPondAction(value);
+
+      if (result.success) {
+        formApi.reset();
+        // revalidatePath("/ponds");
+        redirect("/ponds");
+      }
+      // console.log("Form submitted with values:", value);
     },
   });
 
@@ -45,7 +76,12 @@ export default function NewPondForm() {
       className="space-y-5"
     >
       {newPondFormFields.map((field) => (
-        <NewPondFormFields key={field.name} form={form} {...field} />
+        <NewPondFormFields
+          key={field.name}
+          form={form}
+          isRequired={field.isRequired || false}
+          {...field}
+        />
       ))}
       {/* {error && <p className="text-destructive text-sm">{error}</p>} */}
       <div className="mt-6">

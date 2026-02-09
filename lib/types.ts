@@ -51,4 +51,5 @@ export interface NewPondFormDataType {
   label: string;
   type: "text" | "number" | "date" | "select";
   placeholder?: string;
+  isRequired?: boolean;
 }
