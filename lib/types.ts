@@ -45,3 +45,10 @@ export interface PondCardProps {
   species: string | null;
   type: string;
 }
+
+export interface NewPondFormDataType {
+  name: string;
+  label: string;
+  type: "text" | "number" | "date" | "select";
+  placeholder?: string;
+}

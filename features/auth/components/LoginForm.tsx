@@ -1,16 +1,22 @@
-import { useForm } from "@tanstack/react-form"
-import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { loginFormFields, loginSchema } from "@/lib/constants"
-import { loginAction } from "../actions"
-import { Dispatch, SetStateAction, useState } from "react"
+/* eslint-disable react/no-children-prop */
+import { useForm } from "@tanstack/react-form";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { loginFormFields, loginSchema } from "@/lib/constants";
+import { loginAction } from "../actions";
+import { Dispatch, SetStateAction, useState } from "react";
 
 interface LoginFormProps {
-  setSubmitting: Dispatch<SetStateAction<boolean>>
+  setSubmitting: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function LoginForm({ setSubmitting }: LoginFormProps) {
-  const [error, setError] = useState<string | undefined>("")
+  const [error, setError] = useState<string | undefined>("");
 
   const form = useForm({
     validators: {
@@ -21,40 +27,47 @@ export default function LoginForm({ setSubmitting }: LoginFormProps) {
       password: "",
     },
     onSubmit: async ({ value }) => {
-      setSubmitting(true)
+      setSubmitting(true);
 
-      const result = await loginAction(value)
+      const result = await loginAction(value);
 
       if (!result?.success) {
-        // TODO: provide better ux for error
         console.log(result);
-        setError(result?.error)
+        setError(result?.error);
       }
 
-      setSubmitting(false)
+      setSubmitting(false);
     },
-  })
+  });
 
   return (
-    <form id="login" onSubmit={(e) => {
-      e.preventDefault()
-      form.handleSubmit()
-    }} className="space-y-5">
-      {loginFormFields.map(fieldItem => (
-        <form.Field key={fieldItem.name}
+    <form
+      id="login"
+      onSubmit={(e) => {
+        e.preventDefault();
+        form.handleSubmit();
+      }}
+      className="space-y-5"
+    >
+      {loginFormFields.map((fieldItem) => (
+        <form.Field
+          key={fieldItem.name}
           name={fieldItem.name}
           listeners={{
             onChange: () => {
-              setError(undefined)
-            }
+              setError(undefined);
+            },
           }}
           children={(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
 
             return (
               <Field data-invalid={isInvalid}>
                 <FieldContent>
-                  <FieldLabel htmlFor={field.name}>{fieldItem.label}</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {fieldItem.label}
+                  </FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -65,16 +78,14 @@ export default function LoginForm({ setSubmitting }: LoginFormProps) {
                     aria-invalid={isInvalid}
                     placeholder={fieldItem?.placeholder}
                   />
-                  {isInvalid && (
-                    <FieldError errors={field.state.meta.errors} />
-                  )}
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </FieldContent>
               </Field>
-            )
+            );
           }}
         />
       ))}
       {error && <p className="text-destructive text-sm">{error}</p>}
     </form>
-  )
+  );
 }

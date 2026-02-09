@@ -1,5 +1,5 @@
 import PondCard from "./PondCard";
-import { fetchPonds } from "./data";
+import { fetchPonds } from "../data";
 
 export default async function PondsList() {
   const pondsData = await fetchPonds();

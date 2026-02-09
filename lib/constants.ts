@@ -1,4 +1,8 @@
-import { LoginFormFieldsType, SignUpFormFieldsType } from "./types";
+import {
+  LoginFormFieldsType,
+  NewPondFormDataType,
+  SignUpFormFieldsType,
+} from "./types";
 import * as z from "zod";
 import { Container, Layers, LayoutDashboard, NotebookPen } from "lucide-react";
 
@@ -87,5 +91,43 @@ export const navMenu = [
     name: "Harvests",
     href: "/harvests",
     icon: Container,
+  },
+];
+
+export const newPondFormFields: NewPondFormDataType[] = [
+  {
+    name: "name",
+    label: "Pond Name",
+    type: "text",
+    placeholder: "e.g., Pond 1",
+  },
+  {
+    name: "initialStock",
+    label: "Initial Number of Fish",
+    type: "number",
+    placeholder: "e.g., 1000",
+  },
+  {
+    name: "type",
+    label: "Type",
+    type: "select",
+    placeholder: "enter pond type",
+  },
+  {
+    name: "species",
+    label: "Species (Optional)",
+    type: "text",
+    placeholder: "enter species (optional)",
+  },
+  {
+    name: "stockingDate",
+    label: "Stocking Date (Optional)",
+    type: "date",
+  },
+  {
+    name: "description",
+    label: "Description (Optional)",
+    type: "text",
+    placeholder: "enter description (optional)",
   },
 ];

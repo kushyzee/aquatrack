@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import PondLoadingSkeleton from "@/features/ponds/PondLoadingSkeleton";
-import PondsList from "@/features/ponds/PondsList";
+import PondLoadingSkeleton from "@/features/ponds/components/PondLoadingSkeleton";
+import PondsList from "@/features/ponds/components/PondsList";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
 
 export default function PondsPage() {
@@ -14,9 +15,11 @@ export default function PondsPage() {
             Manage your fish ponds
           </p>
         </div>
-        <Button size="lg">
-          <Plus /> Create Pond
-        </Button>
+        <Link href="/ponds/new">
+          <Button size="lg">
+            <Plus /> Create Pond
+          </Button>
+        </Link>
       </div>
       <Suspense fallback={<PondLoadingSkeleton />}>
         <PondsList />

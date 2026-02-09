@@ -24,13 +24,14 @@ interface HeaderProps {
     name: string;
   };
 }
+
 export default function Header({ userData }: HeaderProps) {
   const [loading, setLoading] = useState(false);
 
-  let pageTitle = usePathname();
+  let pageTitle = usePathname().slice(1).split("/")[0] || "Dashboard"; // Get the first segment of the path as the page title, default to "Dashboard" if empty
 
   navMenu.map((item) => {
-    if (pageTitle === item.href) {
+    if (item.href.slice(1) === pageTitle) {
       pageTitle = item.name;
     }
   });
