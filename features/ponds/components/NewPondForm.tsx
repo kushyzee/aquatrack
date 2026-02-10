@@ -1,17 +1,21 @@
 "use client";
 
-import { useForm } from "@tanstack/react-form";
+import { useForm, useStore } from "@tanstack/react-form";
 import { newPondFormFields } from "@/lib/constants";
 import z from "zod";
 import NewPondFormFields from "./NewPondFormFields";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { newPondAction } from "../action";
+import { createPondWithFormattedData } from "../action";
 import { redirect } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
 const newFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  initialStock: z.string().min(0, "Initial stock must be a positive number"),
+  name: z.string().trim().min(1, "Name is required"),
+  initialStock: z
+    .string()
+    .trim()
+    .min(1, "Initial stock must be a positive number"),
   type: z.string(),
   species: z.string(),
   stockingDate: z.string(),
@@ -22,6 +26,18 @@ export default function NewPondForm() {
   const form = useForm({
     validators: {
       onBlur: newFormSchema,
+      onSubmitAsync: async ({ value }) => {
+        const result = await createPondWithFormattedData(value);
+
+        if (result?.error) {
+          console.log("Error result:", result);
+          return {
+            form: result.error,
+          };
+        }
+
+        return null;
+      },
     },
     defaultValues: {
       name: "",
@@ -31,47 +47,21 @@ export default function NewPondForm() {
       stockingDate: new Date().toISOString().split("T")[0],
       description: "",
     },
-    onSubmit: async ({ value, formApi }) => {
-      if (!value.initialStock) {
-        value.initialStock = "0";
-      } else if (value.type === "") {
-        value.type = "concrete";
-      }
-
-      switch (value.type) {
-        case "concrete":
-          value.type = "Concrete Tank";
-          break;
-        case "earthen":
-          value.type = "Earthen Pond";
-          break;
-        case "plastic":
-          value.type = "Plastic Tank";
-          break;
-        case "tarpaulin":
-          value.type = "Tarpaulin Tank";
-          break;
-        default:
-          break;
-      }
-
-      const result = await newPondAction(value);
-
-      if (result.success) {
-        formApi.reset();
-        // revalidatePath("/ponds");
-        redirect("/ponds");
-      }
-      // console.log("Form submitted with values:", value);
+    onSubmit: async () => {
+      redirect("/ponds");
     },
   });
+
+  const submitError = useStore(form.store, (s) => s.errorMap.onSubmit?.form);
+  const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
+  const canSubmit = useStore(form.store, (s) => s.canSubmit);
 
   return (
     <form
       id="new-pond"
       onSubmit={(e) => {
         e.preventDefault();
-        form.handleSubmit();
+        void form.handleSubmit();
       }}
       className="space-y-5"
     >
@@ -83,13 +73,24 @@ export default function NewPondForm() {
           {...field}
         />
       ))}
-      {/* {error && <p className="text-destructive text-sm">{error}</p>} */}
+      {submitError && <p className="text-destructive text-sm">{submitError}</p>}
       <div className="mt-6">
         <Link href="/ponds">
           <Button variant="outline">Cancel</Button>
         </Link>
-        <Button type="submit" className="ml-2">
-          Create Pond
+
+        <Button
+          disabled={!canSubmit || isSubmitting}
+          type="submit"
+          className="ml-2"
+        >
+          {isSubmitting ? (
+            <>
+              <Spinner /> Creating Pond...
+            </>
+          ) : (
+            "Create Pond"
+          )}
         </Button>
       </div>
     </form>

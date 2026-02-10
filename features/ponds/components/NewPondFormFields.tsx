@@ -86,7 +86,10 @@ export default function NewPondFormFields({
                 name={field.name}
                 type={type}
                 value={field.state.value}
-                onBlur={field.handleBlur}
+                onBlur={() => {
+                  field.state.meta.hasServerError = false;
+                  field.handleBlur();
+                }}
                 onChange={(e) => field.handleChange(e.target.value)}
                 aria-invalid={isInvalid}
                 placeholder={placeholder}

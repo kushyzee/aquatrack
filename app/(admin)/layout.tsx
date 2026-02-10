@@ -10,7 +10,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
   if (!data) {
     return redirect("/login");
@@ -20,8 +20,6 @@ export default async function AdminLayout({
     email: data?.claims.user_metadata?.email,
     name: data?.claims.user_metadata?.name,
   };
-
-  console.log(user);
 
   return (
     <SidebarProvider>

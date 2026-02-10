@@ -82,7 +82,6 @@ export async function loginAction(data: LoginFormDataType) {
     return getErrorObject("supabase", error);
   }
 
-  console.log(user);
   redirect("/");
 }
 
