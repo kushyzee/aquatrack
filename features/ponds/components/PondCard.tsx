@@ -4,12 +4,26 @@ import { PondCardProps } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Layers } from "lucide-react";
 
-export default function PondCard({ pondData }: { pondData: PondCardProps }) {
-  const { name, status, type, species } = pondData;
+export default function PondCard({
+  name,
+  species,
+  status,
+  type,
+  isPondDetailsPage,
+  children,
+}: PondCardProps) {
   const isActive = status === "active";
 
   return (
-    <Card className="min-h-[130px] gap-1.5">
+    <Card
+      className={cn(
+        "min-h-[130px] gap-1.5",
+        isPondDetailsPage && status === "active" && "border-primary border-b-4",
+        isPondDetailsPage &&
+          status === "inactive" &&
+          "border-destructive border-b-4",
+      )}
+    >
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -38,6 +52,7 @@ export default function PondCard({ pondData }: { pondData: PondCardProps }) {
         {isActive && (
           <p className="text-muted-foreground text-xs"> {species}</p>
         )}
+        {isPondDetailsPage && <div className="mt-4">{children}</div>}
       </CardContent>
     </Card>
   );

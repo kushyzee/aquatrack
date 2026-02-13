@@ -44,6 +44,8 @@ export interface PondCardProps {
   status: "active" | "inactive";
   species: string | null;
   type: string;
+  isPondDetailsPage?: boolean;
+  children?: React.ReactNode;
 }
 
 export interface NewPondFormDataType {

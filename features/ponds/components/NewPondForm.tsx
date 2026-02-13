@@ -30,7 +30,7 @@ export default function NewPondForm() {
         const result = await createPondWithFormattedData(value);
 
         if (result?.error) {
-          console.log("Error result:", result);
+          console.error("Error result:", result);
           return {
             form: result.error,
           };
