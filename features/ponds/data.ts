@@ -35,3 +35,21 @@ export async function getPondStockSummary(pondId: string) {
 
   return data;
 }
+
+export async function getPondDailyLog(pondId: string) {
+  const supabase = await createClient();
+
+  const { data: initialLogs, error } = await supabase
+    .from("pond_daily_log")
+    .select("*")
+    .eq("pond_id", pondId)
+    .order("log_date", { ascending: false })
+    .limit(30);
+
+  if (error) {
+    console.error("Error fetching pond daily logs:", error);
+    throw new Error(`Failed to fetch pond daily logs: ${error.message}`);
+  }
+
+  return initialLogs;
+}
