@@ -53,3 +53,20 @@ export async function getPondDailyLog(pondId: string) {
 
   return initialLogs;
 }
+
+export async function getHarvestHistory(pondId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("harvests")
+    .select("*")
+    .eq("pond_id", pondId)
+    .order("harvest_date", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching pond daily logs:", error);
+    throw new Error(`Failed to fetch pond daily logs: ${error.message}`);
+  }
+
+  return data;
+}

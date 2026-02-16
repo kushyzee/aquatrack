@@ -5,7 +5,6 @@ import HarvestHistoryList from "./HarvestHistoryList";
 
 export default async function TimelineTab({ pondId }: { pondId: string }) {
   const dailyLogs = await getPondDailyLog(pondId);
-  console.log(dailyLogs);
 
   return (
     <div>
@@ -25,7 +24,7 @@ export default async function TimelineTab({ pondId }: { pondId: string }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="min-h-24 space-y-4">
-          <HarvestHistoryList />
+          <HarvestHistoryList pondId={pondId} />
         </CardContent>
       </Card>
     </div>

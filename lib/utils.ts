@@ -12,3 +12,7 @@ export function formatDate(date: string) {
     year: "numeric",
   });
 }
+
+export function formatNumber(num: number) {
+  return num.toLocaleString();
+}
