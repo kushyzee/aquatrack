@@ -22,22 +22,19 @@ interface NewPondFormFieldsProps {
   placeholder?: string;
   type: "text" | "number" | "date" | "select";
   isRequired: boolean;
+  selectDefaultValue?: string;
+  selectOptions?: { value: string; label: string }[];
 }
 
-const selectOptions = [
-  { value: "concrete", label: "Concrete Tank" },
-  { value: "earthen", label: "Earthen Pond" },
-  { value: "plastic", label: "Plastic Tank" },
-  { value: "tarpaulin", label: "Tarpaulin Tank" },
-];
-
-export default function NewPondFormFields({
+export default function FormFields({
   form,
   name,
   label,
   placeholder,
   type,
   isRequired,
+  selectDefaultValue,
+  selectOptions,
 }: NewPondFormFieldsProps) {
   return (
     <form.Field
@@ -50,20 +47,23 @@ export default function NewPondFormFields({
           return (
             <Field data-invalid={isInvalid}>
               <FieldContent>
-                <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {label}{" "}
+                  {isRequired && <span className="text-destructive">*</span>}
+                </FieldLabel>
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </FieldContent>
               <Select
                 items={selectOptions}
                 name={field.name}
-                value={field.state.value || "concrete"}
+                value={field.state.value || selectDefaultValue}
                 onValueChange={field.handleChange}
               >
                 <SelectTrigger id={field.name} aria-invalid={isInvalid}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {selectOptions.map((option) => (
+                  {selectOptions?.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>

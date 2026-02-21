@@ -84,7 +84,7 @@ export const navMenu = [
   },
   {
     name: "Daily Logs",
-    href: "/daily-logs",
+    href: "/daily-logs/new",
     icon: NotebookPen,
   },
   {
@@ -131,4 +131,11 @@ export const newPondFormFields: NewPondFormDataType[] = [
     type: "text",
     placeholder: "Optional notes about this pond",
   },
+];
+
+export const newPondSelectOptions = [
+  { value: "concrete", label: "Concrete Tank" },
+  { value: "earthen", label: "Earthen Pond" },
+  { value: "plastic", label: "Plastic Tank" },
+  { value: "tarpaulin", label: "Tarpaulin Tank" },
 ];

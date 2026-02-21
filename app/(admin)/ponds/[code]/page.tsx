@@ -16,8 +16,6 @@ export default async function PondDetailPage({
 
   const data = await getPondStockSummary(code);
 
-  console.log(data);
-
   return (
     <div>
       <BackButton href="/ponds" />
@@ -44,7 +42,7 @@ export default async function PondDetailPage({
       </PondCard>
 
       <div className="mt-6 mb-7 flex flex-col gap-4">
-        <Link href="/daily-logs">
+        <Link href={`/daily-logs/${code}`}>
           <Button className="w-full">
             <Plus data-icon="inline-start" /> Add Today&apos;s Log
           </Button>

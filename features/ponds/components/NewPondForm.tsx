@@ -1,14 +1,14 @@
 "use client";
 
 import { useForm, useStore } from "@tanstack/react-form";
-import { newPondFormFields } from "@/lib/constants";
+import { newPondFormFields, newPondSelectOptions } from "@/lib/constants";
 import z from "zod";
-import NewPondFormFields from "./NewPondFormFields";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { createPondWithFormattedData } from "../action";
 import { redirect } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
+import FormFields from "./FormFields";
 
 const newFormSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -66,11 +66,13 @@ export default function NewPondForm() {
       className="space-y-5"
     >
       {newPondFormFields.map((field) => (
-        <NewPondFormFields
+        <FormFields
           key={field.name}
           form={form}
           isRequired={field.isRequired || false}
           {...field}
+          selectDefaultValue="concrete"
+          selectOptions={newPondSelectOptions}
         />
       ))}
       {submitError && <p className="text-destructive text-sm">{submitError}</p>}
