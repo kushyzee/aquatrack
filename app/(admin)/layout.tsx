@@ -3,6 +3,7 @@ import Header from "@/features/layout/components/Header";
 import AppSidebar from "@/features/layout/components/AppSidebar";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function AdminLayout({
   children,
@@ -27,6 +28,7 @@ export default async function AdminLayout({
       <div className="w-full p-5">
         <Header userData={user} />
         <main className="mt-7">{children}</main>
+        <Toaster richColors closeButton />
       </div>
     </SidebarProvider>
   );

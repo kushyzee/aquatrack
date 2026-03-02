@@ -7,6 +7,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import FormFields from "@/features/ponds/components/FormFields";
+import { formatFormData } from "../action";
+import { toast } from "sonner";
+// import { checkLogExists } from "../data";
 
 interface NewLogFormProps {
   selectValue: string | undefined;
@@ -33,10 +36,53 @@ export default function NewLogForm({
 }: NewLogFormProps) {
   const form = useForm({
     validators: {
+      // onChangeAsync: async ({ value, formApi }) => {
+      //   if (
+      //     formApi.getFieldMeta("pondName")?.isDirty ||
+      //     formApi.getFieldMeta("logDate")?.isDirty
+      //   ) {
+      //     const selectedPondId = pondOptions.find(
+      //       (pond) => pond.value === value.pondName,
+      //     )?.id;
+      //     console.log(value.logDate);
+
+      //     const result = await checkLogExists(selectedPondId!, value.logDate);
+
+      //     if (result?.exists) {
+      //       toast.error("A log already exists for this date and pond.");
+      //       formApi.setFieldMeta("logDate", (prev) => ({
+      //         ...prev,
+      //         isTouched: true,
+      //       }));
+
+      //       return {
+      //         fields: {
+      //           pondName: "A log already exists for this date and pond.",
+      //           logDate: "A log already exists for this date and pond.",
+      //         },
+      //       };
+      //     } else {
+      //       // formApi.resetFieldMeta({});
+      //     }
+      //   }
+      // },
       onBlur: newLogFormSchema,
       onSubmitAsync: async ({ value }) => {
-        console.log("Form submitted with values:", value);
-        // Here you would typically send the data to your backend API
+        value.pondName = value.pondName
+          ? value.pondName
+          : selectValue || pondOptions[0]?.value;
+
+        const selectedPondId = pondOptions.find(
+          (pond) => pond.value === value.pondName,
+        )?.id;
+
+        const result = await formatFormData(value, selectedPondId);
+
+        if (result?.error) {
+          toast.error("A log already exists for this date and pond.");
+        } else {
+          toast.success("Log created successfully!");
+        }
       },
     },
     defaultValues: {
@@ -50,17 +96,9 @@ export default function NewLogForm({
       pH: "",
       notes: "",
     },
-    onSubmit: async ({ value }) => {
-      value.pondName = value.pondName
-        ? value.pondName
-        : selectValue || pondOptions[0]?.value;
-
-      console.log(value.pondName);
-
-      const selectedPondId = selectValue
-        ? pondId
-        : pondOptions.find((pond) => pond.value === value.pondName)?.id;
-      console.log("Pond id:", selectedPondId);
+    onSubmit({ formApi }) {
+      formApi.resetField("mortalityCount");
+      formApi.resetField("suspectedCause");
     },
   });
 
