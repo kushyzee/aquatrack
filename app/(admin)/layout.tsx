@@ -18,8 +18,8 @@ export default async function AdminLayout({
   }
 
   const user = {
-    email: data?.claims.user_metadata?.email,
-    name: data?.claims.user_metadata?.name,
+    email: data.claims.user_metadata?.email,
+    name: data.claims.user_metadata?.name,
   };
 
   return (

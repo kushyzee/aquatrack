@@ -10,11 +10,11 @@ import Link from "next/link";
 export default async function PondDetailPage({
   params,
 }: {
-  params: Promise<{ code: string }>;
+  params: Promise<{ pondId: string }>;
 }) {
-  const { code } = await params;
+  const { pondId } = await params;
 
-  const data = await getPondStockSummary(code);
+  const data = await getPondStockSummary(pondId);
 
   return (
     <div>
@@ -42,7 +42,7 @@ export default async function PondDetailPage({
       </PondCard>
 
       <div className="mt-6 mb-7 flex flex-col gap-4">
-        <Link href={`/daily-logs/${code}`}>
+        <Link href={`/daily-logs/${pondId}`}>
           <Button className="w-full">
             <Plus data-icon="inline-start" /> Add Today&apos;s Log
           </Button>
@@ -53,7 +53,7 @@ export default async function PondDetailPage({
           </Button>
         </Link>
       </div>
-      <PondDetailTab pondId={code} />
+      <PondDetailTab pondId={pondId} />
     </div>
   );
 }

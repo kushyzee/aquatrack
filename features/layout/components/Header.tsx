@@ -28,13 +28,10 @@ interface HeaderProps {
 export default function Header({ userData }: HeaderProps) {
   const [loading, setLoading] = useState(false);
 
-  let pageTitle = usePathname().slice(1).split("/")[0] || "Dashboard"; // Get the first segment of the path as the page title, default to "Dashboard" if empty
+  let pageTitle: string | undefined =
+    usePathname().slice(1).split("/")[0] || "Dashboard";
 
-  navMenu.map((item) => {
-    if (item.href.slice(1) === pageTitle) {
-      pageTitle = item.name;
-    }
-  });
+  pageTitle = navMenu.find((item) => item.href.slice(1) === pageTitle)?.name;
 
   const handleLogout = async () => {
     setLoading(true);
@@ -62,10 +59,8 @@ export default function Header({ userData }: HeaderProps) {
           className="w-auto min-w-52"
         >
           <DropdownMenuGroup>
-            <DropdownMenuLabel>{userData?.name || "User"}</DropdownMenuLabel>
-            <DropdownMenuItem>
-              {userData?.email || "user@example.com"}
-            </DropdownMenuItem>
+            <DropdownMenuLabel>{userData.name}</DropdownMenuLabel>
+            <DropdownMenuItem>{userData.email}</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem

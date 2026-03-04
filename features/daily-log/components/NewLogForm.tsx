@@ -1,33 +1,20 @@
 "use client";
 
 import { useForm, useStore } from "@tanstack/react-form";
-import z from "zod";
 import FormSection from "./FormSection";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import FormFields from "@/features/ponds/components/FormFields";
-import { formatFormData } from "../action";
+import { createDailyLog } from "../action";
 import { toast } from "sonner";
-// import { checkLogExists } from "../data";
+import { newLogFormSchema } from "../schema";
 
 interface NewLogFormProps {
   selectValue: string | undefined;
   pondId: string | undefined;
   pondOptions: { value: string; label: string; id?: string }[];
 }
-
-const newLogFormSchema = z.object({
-  pondName: z.string(),
-  logDate: z.string(),
-  feedType: z.string(),
-  feedQuantity: z.string(),
-  mortalityCount: z.string(),
-  suspectedCause: z.string(),
-  temperature: z.string(),
-  pH: z.string(),
-  notes: z.string(),
-});
 
 export default function NewLogForm({
   selectValue,
@@ -76,7 +63,7 @@ export default function NewLogForm({
           (pond) => pond.value === value.pondName,
         )?.id;
 
-        const result = await formatFormData(value, selectedPondId);
+        const result = await createDailyLog(value, selectedPondId);
 
         if (result?.error) {
           toast.error("A log already exists for this date and pond.");
@@ -96,7 +83,9 @@ export default function NewLogForm({
       pH: "",
       notes: "",
     },
-    onSubmit({ formApi }) {
+    onSubmit({ formApi, value }) {
+      console.log(value);
+
       formApi.resetField("mortalityCount");
       formApi.resetField("suspectedCause");
     },

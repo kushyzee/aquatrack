@@ -11,33 +11,40 @@ interface FormDataProps {
   description: string;
 }
 
+interface Normalized {
+  formData: FormDataProps;
+  type: string;
+  pondStatus: string;
+  pondCode: string;
+}
+
+function normalizePondType(type: string) {
+  const map: Record<string, string> = {
+    concrete: "Concrete Tank",
+    earthen: "Earthen Pond",
+    plastic: "Plastic Tank",
+    tarpaulin: "Tarpaulin Tank",
+  };
+  return map[type] ?? "Concrete Tank";
+}
+
+function derivePondStatus(initialStock: string) {
+  return Number(initialStock) < 1 ? "inactive" : "active";
+}
+
+function makePondCode(name: string) {
+  return name.trim().replace(/\s+/g, "-");
+}
+
 export async function createPondWithFormattedData(formData: FormDataProps) {
-  switch (formData.type) {
-    case "concrete":
-      formData.type = "Concrete Tank";
-      break;
-    case "earthen":
-      formData.type = "Earthen Pond";
-      break;
-    case "plastic":
-      formData.type = "Plastic Tank";
-      break;
-    case "tarpaulin":
-      formData.type = "Tarpaulin Tank";
-      break;
-    default:
-      formData.type = "Concrete Tank";
-      break;
-  }
+  const normalized = {
+    formData,
+    type: normalizePondType(formData.type),
+    pondStatus: derivePondStatus(formData.initialStock),
+    pondCode: makePondCode(formData.name),
+  };
 
-  let pondStatus = "active";
-  if (Number(formData.initialStock) < 1) {
-    pondStatus = "inactive";
-  }
-
-  const pondCode = formData.name.trim().replace(" ", "-");
-
-  const result = await newPondAction(formData, pondStatus, pondCode);
+  const result = await newPondAction(normalized);
 
   if (result?.error && result.error.startsWith("duplicate key value")) {
     return {
@@ -51,11 +58,9 @@ export async function createPondWithFormattedData(formData: FormDataProps) {
   }
 }
 
-export async function newPondAction(
-  formData: FormDataProps,
-  pondStatus: string,
-  pondCode: string,
-) {
+export async function newPondAction(normalized: Normalized) {
+  const { formData, pondCode, pondStatus, type } = normalized;
+
   const supabase = await createClient();
 
   const { data: currentUser } = await supabase.auth.getUser();
@@ -64,7 +69,7 @@ export async function newPondAction(
   const { error } = await supabase.from("ponds").insert({
     name: formData.name.trim(),
     initial_fish_count: Number(formData.initialStock.trim()) ?? 0,
-    type: formData.type,
+    type,
     species: formData.species || "Catfish",
     stocking_date: formData.stockingDate,
     description: formData.description || null,
