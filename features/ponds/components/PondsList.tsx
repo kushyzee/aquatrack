@@ -6,7 +6,7 @@ export default async function PondsList() {
   const pondsData = await fetchPonds();
 
   return (
-    <div className="mt-6 grid grid-cols-1 gap-5">
+    <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
       {pondsData.map((pond) => (
         <Link key={pond.id} href={`/ponds/${pond.id}`}>
           <PondCard

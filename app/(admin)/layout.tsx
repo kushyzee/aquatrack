@@ -25,7 +25,7 @@ export default async function AdminLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <div className="w-full p-5">
+      <div className="mx-auto w-full max-w-[1200px] p-5">
         <Header userData={user} />
         <main className="mt-7">{children}</main>
         <Toaster richColors closeButton />

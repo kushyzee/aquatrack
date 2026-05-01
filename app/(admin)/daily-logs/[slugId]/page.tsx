@@ -33,7 +33,7 @@ export default async function DailyLogsPage({
   const currentPond = ponds.find((pond) => pond.id === slugId);
 
   return (
-    <div>
+    <div className="mx-auto max-w-2xl">
       {currentPond ? (
         <BackButton
           href={`/ponds/${slugId}`}
