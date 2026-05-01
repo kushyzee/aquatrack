@@ -16,3 +16,13 @@ export function formatDate(date: string) {
 export function formatNumber(num: number) {
   return num.toLocaleString();
 }
+
+export function formatCurrency(num: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    currencyDisplay: "code",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+}

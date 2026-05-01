@@ -2,8 +2,9 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-const supabase = await createClient();
 export async function getTotalFishInFarm() {
+  const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("farm_total_fish")
     .select("*")
@@ -37,6 +38,8 @@ export async function getFeedUsedRollups() {
 }
 
 export async function getMortalityRollups() {
+  const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("mortality_rollups")
     .select("mortality_7d, mortality_30d")
@@ -75,6 +78,8 @@ export async function getHarvestMtdRollup() {
 }
 
 export async function getPondsWithHighMortality() {
+  const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("pond_mortality_7d")
     .select("pond_name, mortality_last_7d")
