@@ -1,15 +1,20 @@
-import { GlobalFormValidationError, useForm, useStore } from "@tanstack/react-form"
-import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { signUpFormFields, signUpSchema } from "@/lib/constants"
-import { signUpAction } from "../actions"
-import { Dispatch, SetStateAction, useState } from "react"
+import { useForm } from "@tanstack/react-form";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { signUpFormFields, signUpSchema } from "@/lib/constants";
+import { signUpAction } from "../actions";
+import { Dispatch, SetStateAction, useState } from "react";
 
 interface SignUpFormProps {
-  setSubmitting: Dispatch<SetStateAction<boolean>>
+  setSubmitting: Dispatch<SetStateAction<boolean>>;
 }
 export default function SignUpForm({ setSubmitting }: SignUpFormProps) {
-  const [error, setError] = useState<string | undefined>("")
+  const [error, setError] = useState<string | undefined>("");
 
   const form = useForm({
     validators: {
@@ -22,37 +27,44 @@ export default function SignUpForm({ setSubmitting }: SignUpFormProps) {
       password: "",
       confirmPassword: "",
     },
-    onSubmit: async ({ value, formApi }) => {
-      setSubmitting(true)
+    onSubmit: async ({ value }) => {
+      setSubmitting(true);
 
-      const result = await signUpAction(value)
+      const result = await signUpAction(value);
 
       if (!result?.success) {
         console.log(result);
-        setError(result?.error)
+        setError(result?.error);
       }
 
-      setSubmitting(false)
-
+      setSubmitting(false);
     },
-  })
-
+  });
 
   return (
-    <form id="signup" onSubmit={(e) => {
-      e.preventDefault()
-      form.handleSubmit()
-    }} className="space-y-5">
-      {signUpFormFields.map(fieldItem => (
-        <form.Field key={fieldItem.name}
+    <form
+      id="signup"
+      onSubmit={(e) => {
+        e.preventDefault();
+        form.handleSubmit();
+      }}
+      className="space-y-5"
+    >
+      {signUpFormFields.map((fieldItem) => (
+        <form.Field
+          key={fieldItem.name}
           name={fieldItem.name}
-          children={(field) => {
-            const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+        >
+          {(field) => {
+            const isInvalid =
+              field.state.meta.isTouched && !field.state.meta.isValid;
 
             return (
               <Field data-invalid={isInvalid}>
                 <FieldContent>
-                  <FieldLabel htmlFor={field.name}>{fieldItem.label}</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {fieldItem.label}
+                  </FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -63,17 +75,15 @@ export default function SignUpForm({ setSubmitting }: SignUpFormProps) {
                     aria-invalid={isInvalid}
                     placeholder={fieldItem?.placeholder}
                   />
-                  {isInvalid && (
-                    <FieldError errors={field.state.meta.errors} />
-                  )}
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </FieldContent>
               </Field>
-            )
+            );
           }}
-        />
+        </form.Field>
       ))}
 
       {error && <p className="text-destructive text-sm">{error}</p>}
     </form>
-  )
+  );
 }

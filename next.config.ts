@@ -1,11 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  turbopack: {
-    //TODO: remove later
-    root: "/home/kushyzee/Desktop/vscode/nextjs/aquatrack",
-  },
+  allowedDevOrigins: ["192.168.0.42"],
 };
 
 export default nextConfig;

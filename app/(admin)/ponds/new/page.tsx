@@ -5,7 +5,7 @@ import NewPondForm from "@/features/ponds/components/NewPondForm";
 export default function NewPondPage() {
   return (
     <div className="mx-auto max-w-2xl">
-      <BackButton href="/admin/ponds" />
+      <BackButton href="/ponds" />
       <CardWrapper
         title="Create New Pond"
         description="Add a new pond to your farm"

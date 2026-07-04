@@ -75,7 +75,11 @@ export default function NewPondForm() {
           selectOptions={newPondSelectOptions}
         />
       ))}
-      {submitError && <p className="text-destructive text-sm">{submitError}</p>}
+      {submitError && (
+        <div className="bg-destructive/10 border-destructive/30 my-4 rounded-md border p-2 text-center">
+          <p className="text-destructive text-sm">{submitError}</p>
+        </div>
+      )}
       <div className="mt-6">
         <Link href="/ponds">
           <Button variant="outline">Cancel</Button>

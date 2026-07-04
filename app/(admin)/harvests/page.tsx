@@ -2,8 +2,11 @@ import PageWrapper from "@/components/PageWrapper";
 import HarvestDataDetails from "@/features/harvests/components/HarvestDataDetails";
 import HarvestStats from "@/features/harvests/components/HarvestStats";
 import NoHarvest from "@/features/harvests/components/NoHarvest";
+import { getHarvestRecords } from "@/features/harvests/data";
 
-export default function HarvestsPage() {
+export default async function HarvestsPage() {
+  const harvests = await getHarvestRecords();
+
   return (
     <PageWrapper
       title="Harvests"
@@ -12,9 +15,14 @@ export default function HarvestsPage() {
       buttonText="Add Harvest"
     >
       <div className="space-y-6">
-        {false && <NoHarvest />}
-        <HarvestStats />
-        <HarvestDataDetails />
+        {harvests.length === 0 ? (
+          <NoHarvest />
+        ) : (
+          <>
+            <HarvestStats />
+            <HarvestDataDetails harvests={harvests} />
+          </>
+        )}
       </div>
     </PageWrapper>
   );

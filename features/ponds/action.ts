@@ -32,33 +32,58 @@ function derivePondStatus(initialStock: string) {
   return Number(initialStock) < 1 ? "inactive" : "active";
 }
 
-function makePondCode(name: string) {
+function slugifyPondName(name: string) {
   return name.trim().replace(/\s+/g, "-");
 }
 
+async function makeUniquePondCode(name: string): Promise<string> {
+  const supabase = await createClient();
+  const baseCode = slugifyPondName(name);
+
+  const { data: existing, error } = await supabase
+    .from("ponds")
+    .select("code")
+    .ilike("code", `${baseCode}%`);
+
+  if (error) {
+    return baseCode;
+  }
+
+  const existingCodes = new Set((existing ?? []).map((p) => p.code));
+
+  if (!existingCodes.has(baseCode)) {
+    return baseCode;
+  }
+
+  let suffix = 2;
+  while (existingCodes.has(`${baseCode}-${suffix}`)) {
+    suffix++;
+  }
+
+  return `${baseCode}-${suffix}`;
+}
+
 export async function createPondWithFormattedData(formData: FormDataProps) {
-  const normalized = {
+  const pondCode = await makeUniquePondCode(formData.name);
+
+  const normalized: Normalized = {
     formData,
     type: normalizePondType(formData.type),
     pondStatus: derivePondStatus(formData.initialStock),
-    pondCode: makePondCode(formData.name),
+    pondCode,
   };
 
   const result = await newPondAction(normalized);
 
-  if (result?.error && result.error.startsWith("duplicate key value")) {
-    return {
-      error: "A pond with this name already exists.",
-      errorField: "name",
-    };
-  } else if (result?.error) {
-    return {
-      error: "An unexpected error occurred. Please try again.",
-    };
+  if (result?.error) {
+    return result;
   }
 }
 
-export async function newPondAction(normalized: Normalized) {
+export async function newPondAction(
+  normalized: Normalized,
+  retryCount = 0,
+): Promise<{ error?: string; errorField?: string } | undefined> {
   const { formData, pondCode, pondStatus, type } = normalized;
 
   const supabase = await createClient();
@@ -79,7 +104,27 @@ export async function newPondAction(normalized: Normalized) {
   });
 
   if (error) {
-    console.log({ error });
-    return { error: error.message };
+    // 23505 = Postgres unique_violation
+    if (error.code === "23505") {
+      if (error.message.includes("ponds_name_key")) {
+        return {
+          error: "A pond with this name already exists.",
+          errorField: "name",
+        };
+      }
+
+      if (error.message.includes("ponds_code_unique")) {
+        if (retryCount < 3) {
+          const nextCode = `${pondCode}-${retryCount + 2}`;
+          return newPondAction(
+            { ...normalized, pondCode: nextCode },
+            retryCount + 1,
+          );
+        }
+      }
+    }
+
+    console.error({ error });
+    return { error: "An unexpected error occurred. Please try again." };
   }
 }
