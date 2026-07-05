@@ -12,6 +12,33 @@ export interface HarvestRecord {
   pond_name: string | null;
 }
 
+interface HarvestQueryRow extends Omit<HarvestRecord, "pond_name"> {
+  ponds: { name: string } | null;
+}
+
+export interface PondWithStock {
+  pond_id: string;
+  pond_name: string;
+  current_fish_count: number;
+}
+
+export async function getActivePondsWithStock(): Promise<PondWithStock[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("pond_current_stock")
+    .select("pond_id, pond_name, current_fish_count")
+    .eq("status", "active")
+    .order("pond_name");
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
 export async function getHarvestRecords(): Promise<HarvestRecord[]> {
   const supabase = await createClient();
 
@@ -20,7 +47,8 @@ export async function getHarvestRecords(): Promise<HarvestRecord[]> {
     .select(
       "id, harvest_date, quantity_kg, fish_count, revenue, buyer, notes, ponds(name)",
     )
-    .order("harvest_date", { ascending: false });
+    .order("harvest_date", { ascending: false })
+    .overrideTypes<HarvestQueryRow[]>();
 
   if (error) {
     console.error(error);
@@ -35,6 +63,6 @@ export async function getHarvestRecords(): Promise<HarvestRecord[]> {
     revenue: h.revenue,
     buyer: h.buyer,
     notes: h.notes,
-    pond_name: (h.ponds as unknown as { name: string }[] | null)?.[0]?.name ?? null,
+    pond_name: h.ponds?.name ?? null,
   }));
 }

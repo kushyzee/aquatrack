@@ -11,7 +11,7 @@ export default async function HarvestsPage() {
     <PageWrapper
       title="Harvests"
       description="Track your harvest records"
-      link="/harvest/new"
+      link="/harvests/new"
       buttonText="Add Harvest"
     >
       <div className="space-y-6">
