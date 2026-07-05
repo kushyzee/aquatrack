@@ -1,9 +1,131 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
 export interface AvailablePond {
   pond_id: string;
   pond_name: string;
+}
+
+export interface PondCycleBreakdown {
+  pond_id: string;
+  pond_name: string;
+  pond_code: string | null;
+  stocked_in: number;
+  transferred_in: number;
+  transferred_out: number;
+  total_mortality: number;
+  total_harvested: number;
+  current_fish_count: number;
+}
+
+export async function getCycleById(
+  cycleId: string,
+): Promise<CycleSummary | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("cycle_summary")
+    .select("*")
+    .eq("cycle_id", cycleId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function getPondBreakdownForCycle(
+  cycleId: string,
+): Promise<PondCycleBreakdown[]> {
+  const supabase = await createClient();
+
+  const { data: stockRows, error: stockError } = await supabase
+    .from("pond_cycle_stock")
+    .select("*")
+    .eq("cycle_id", cycleId);
+
+  if (stockError) {
+    console.error(stockError);
+    return [];
+  }
+
+  if (!stockRows || stockRows.length === 0) return [];
+
+  const pondIds = stockRows.map((row) => row.pond_id);
+
+  const { data: ponds, error: pondsError } = await supabase
+    .from("ponds")
+    .select("id, name, code")
+    .in("id", pondIds);
+
+  if (pondsError) {
+    console.error(pondsError);
+    return [];
+  }
+
+  const pondMap = new Map((ponds ?? []).map((p) => [p.id, p]));
+
+  return stockRows
+    .map((row) => {
+      const pond = pondMap.get(row.pond_id);
+      return {
+        pond_id: row.pond_id,
+        pond_name: pond?.name ?? "Unknown pond",
+        pond_code: pond?.code ?? null,
+        stocked_in: row.stocked_in,
+        transferred_in: row.transferred_in,
+        transferred_out: row.transferred_out,
+        total_mortality: row.total_mortality,
+        total_harvested: row.total_harvested,
+        current_fish_count: row.current_fish_count,
+      };
+    })
+    .sort((a, b) => b.current_fish_count - a.current_fish_count);
+}
+
+export interface CycleTransfer {
+  id: string;
+  transfer_date: string;
+  count: number;
+  notes: string | null;
+  from_pond_name: string;
+  to_pond_name: string;
+}
+
+export async function getTransfersForCycle(
+  cycleId: string,
+): Promise<CycleTransfer[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("stock_transfers")
+    .select(
+      `
+      id, count, transfer_date, notes,
+      from_pond:ponds!stock_transfers_from_pond_id_fkey(name),
+      to_pond:ponds!stock_transfers_to_pond_id_fkey(name)
+    `,
+    )
+    .eq("cycle_id", cycleId)
+    .order("transfer_date", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    transfer_date: row.transfer_date,
+    count: row.count,
+    notes: row.notes,
+    from_pond_name: row.from_pond?.name ?? "Unknown pond",
+    to_pond_name: row.to_pond?.name ?? "Unknown pond",
+  }));
 }
 
 export async function getAvailablePondsForStocking(): Promise<AvailablePond[]> {
@@ -34,6 +156,7 @@ export interface CycleSummary {
   total_mortality: number;
   total_harvested: number;
   total_remaining: number;
+  unaccounted_loss: number;
 }
 
 export async function getCycles(): Promise<CycleSummary[]> {

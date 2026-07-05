@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import CycleStatusBadge from "./CycleStatusBadge";
+import { formatDate } from "@/lib/utils";
 
 type CycleSummary = {
   cycle_id: string;
@@ -14,14 +15,6 @@ type CycleSummary = {
   total_remaining: number;
 };
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-NG", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
 export default function CycleCard({ cycle }: { cycle: CycleSummary }) {
   return (
     <Link href={`/cycles/${cycle.cycle_id}`} className="block h-full">
@@ -33,9 +26,7 @@ export default function CycleCard({ cycle }: { cycle: CycleSummary }) {
               {cycle.species}
             </h3>
           </div>
-          <Badge variant={cycle.status === "active" ? "default" : "secondary"}>
-            {cycle.status === "active" ? "Active" : "Completed"}
-          </Badge>
+          <CycleStatusBadge status={cycle.status} />
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-muted-foreground text-sm">

@@ -356,6 +356,7 @@ export type Database = {
           species: string
           start_date: string
           status: string
+          unaccounted_loss: number
         }
         Insert: {
           created_at?: string
@@ -365,6 +366,7 @@ export type Database = {
           species: string
           start_date: string
           status?: string
+          unaccounted_loss?: number
         }
         Update: {
           created_at?: string
@@ -374,6 +376,7 @@ export type Database = {
           species?: string
           start_date?: string
           status?: string
+          unaccounted_loss?: number
         }
         Relationships: []
       }
@@ -483,6 +486,7 @@ export type Database = {
           total_mortality: number | null
           total_remaining: number | null
           total_stocked: number | null
+          unaccounted_loss: number | null
         }
         Relationships: []
       }
@@ -617,6 +621,10 @@ export type Database = {
           p_water_temp_c: number
         }
         Returns: Json
+      }
+      end_cycle: {
+        Args: { p_cycle_id: string; p_end_date: string }
+        Returns: undefined
       }
     }
     Enums: {

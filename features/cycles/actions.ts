@@ -3,11 +3,39 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { newCycleSchema } from "./schema";
+import { revalidatePath } from "next/cache";
+import { endCycleSchema } from "./schema";
 
 interface CreateCycleInput {
   species: string;
   start_date: string;
   stockings: { pond_id: string; fish_count: string }[];
+}
+
+export async function endCycleAction(input: {
+  cycleId: string;
+  endDate: string;
+}) {
+  const parsed = endCycleSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("end_cycle", {
+    p_cycle_id: parsed.data.cycleId,
+    p_end_date: parsed.data.endDate,
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath(`/cycles/${parsed.data.cycleId}`);
+  revalidatePath("/cycles");
+  return { success: true };
 }
 
 export async function createCycleAction(input: CreateCycleInput) {

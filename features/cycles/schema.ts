@@ -28,4 +28,15 @@ export const newCycleSchema = z.object({
     ),
 });
 
+export const endCycleSchema = z.object({
+  cycleId: z.string().uuid(),
+  endDate: z
+    .string()
+    .refine(
+      (d) => new Date(d) <= new Date(),
+      "End date can't be in the future",
+    ),
+});
+
+export type EndCycleInput = z.infer<typeof endCycleSchema>;
 export type NewCycleFormValues = z.infer<typeof newCycleSchema>;
