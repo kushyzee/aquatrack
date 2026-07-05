@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const cycleStockingSchema = z.object({
-  pond_id: z.string().uuid(),
+  pond_id: z.uuid({ message: "Please select a pond" }),
   fish_count: z
     .string()
     .min(1, "Fish count is required.")
