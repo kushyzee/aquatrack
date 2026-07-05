@@ -71,7 +71,6 @@ export default function NewHarvestForm({ ponds }: NewHarvestFormProps) {
 
       toast.success("Harvest recorded.");
       router.push("/harvests");
-      // router.refresh();
     },
   });
 

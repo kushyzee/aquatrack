@@ -2,10 +2,13 @@ import PageWrapper from "@/components/PageWrapper";
 import HarvestDataDetails from "@/features/harvests/components/HarvestDataDetails";
 import HarvestStats from "@/features/harvests/components/HarvestStats";
 import NoHarvest from "@/features/harvests/components/NoHarvest";
-import { getHarvestRecords } from "@/features/harvests/data";
+import { getHarvestRecords, getHarvestTotals } from "@/features/harvests/data";
 
 export default async function HarvestsPage() {
-  const harvests = await getHarvestRecords();
+  const [harvests, totals] = await Promise.all([
+    getHarvestRecords(),
+    getHarvestTotals(),
+  ]);
 
   return (
     <PageWrapper
@@ -19,7 +22,7 @@ export default async function HarvestsPage() {
           <NoHarvest />
         ) : (
           <>
-            <HarvestStats />
+            <HarvestStats totals={totals} />
             <HarvestDataDetails harvests={harvests} />
           </>
         )}

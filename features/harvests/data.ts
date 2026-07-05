@@ -22,6 +22,27 @@ export interface PondWithStock {
   current_fish_count: number;
 }
 
+export interface HarvestTotals {
+  total_weight_kg: number;
+  total_quantity: number;
+  total_revenue: number;
+}
+
+export async function getHarvestTotals(): Promise<HarvestTotals> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("harvest_totals")
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    console.error(error);
+    return { total_weight_kg: 0, total_quantity: 0, total_revenue: 0 };
+  }
+
+  return data;
+}
+
 export async function getActivePondsWithStock(): Promise<PondWithStock[]> {
   const supabase = await createClient();
 
