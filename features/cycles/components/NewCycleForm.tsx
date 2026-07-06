@@ -23,17 +23,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { newCycleSchema } from "../schema";
 import { AvailablePond } from "../data";
 import { createCycleAction } from "../actions";
+import { toFieldErrors } from "@/lib/utils";
 
 interface NewCycleFormProps {
   ponds: AvailablePond[];
-}
-
-function toFieldErrors(errors: unknown): { message: string }[] {
-  if (!Array.isArray(errors)) return [];
-  return errors
-    .map((e) => (typeof e === "string" ? e : e?.message))
-    .filter((message): message is string => Boolean(message))
-    .map((message) => ({ message }));
 }
 
 export default function NewCycleForm({ ponds }: NewCycleFormProps) {
@@ -322,9 +315,10 @@ export default function NewCycleForm({ ponds }: NewCycleFormProps) {
           <div className="mt-6 flex gap-2">
             <Button type="submit" disabled={!canSubmit || isSubmitting}>
               {isSubmitting ? (
-                <>
-                  <Spinner /> Starting Cycle...
-                </>
+                <p className="flex items-center gap-2">
+                  <Spinner />
+                  <span>Starting Cycle...</span>
+                </p>
               ) : (
                 "Start Cycle"
               )}

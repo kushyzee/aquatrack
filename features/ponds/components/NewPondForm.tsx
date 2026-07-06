@@ -1,104 +1,190 @@
 "use client";
 
-import { useForm, useStore } from "@tanstack/react-form";
-import { newPondFormFields, newPondSelectOptions } from "@/lib/constants";
-import z from "zod";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "@tanstack/react-form";
+import { toast } from "sonner";
+import { PondSchema, type PondFormInput } from "../schema";
+import { createPondAction } from "../action";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { createPondWithFormattedData } from "../action";
-import { redirect } from "next/navigation";
+import {
+  Field,
+  FieldContent,
+  FieldLabel,
+  FieldError,
+} from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toFieldErrors } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
-import FormFields from "./FormFields";
 
-const newFormSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  initialStock: z
-    .string()
-    .trim()
-    .min(1, "Initial stock must be a positive number"),
-  type: z.string(),
-  species: z.string(),
-  stockingDate: z.string(),
-  description: z.string(),
-});
+const POND_TYPES = PondSchema.shape.type.options;
+
+type ServerErrors = Partial<Record<keyof PondFormInput, string>>;
 
 export default function NewPondForm() {
+  const router = useRouter();
+  const [serverErrors, setServerErrors] = useState<ServerErrors>({});
+
   const form = useForm({
-    validators: {
-      onBlur: newFormSchema,
-      onSubmitAsync: async ({ value }) => {
-        const result = await createPondWithFormattedData(value);
-
-        if (result?.error) {
-          console.error("Error result:", result);
-          return {
-            form: result.error,
-          };
-        }
-
-        return null;
-      },
-    },
     defaultValues: {
       name: "",
-      initialStock: "0",
-      type: "",
-      species: "",
-      stockingDate: new Date().toISOString().split("T")[0],
+      type: "Concrete",
       description: "",
-    },
-    onSubmit: async () => {
-      redirect("/ponds");
+    } as PondFormInput,
+    onSubmit: async ({ value }) => {
+      const result = await createPondAction(value);
+
+      if (result?.error) {
+        if (result.errorField) {
+          setServerErrors({ [result.errorField]: result.error });
+        } else {
+          toast.error(result.error);
+        }
+        return;
+      }
+
+      toast.success("Pond created successfully.");
+      router.push("/ponds");
     },
   });
 
-  const submitError = useStore(form.store, (s) => s.errorMap.onSubmit?.form);
-  const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
-  const canSubmit = useStore(form.store, (s) => s.canSubmit);
-
   return (
     <form
-      id="new-pond"
       onSubmit={(e) => {
         e.preventDefault();
-        void form.handleSubmit();
+        e.stopPropagation();
+        form.handleSubmit();
       }}
-      className="space-y-5"
+      className="space-y-6"
     >
-      {newPondFormFields.map((field) => (
-        <FormFields
-          key={field.name}
-          form={form}
-          isRequired={field.isRequired || false}
-          {...field}
-          selectDefaultValue="concrete"
-          selectOptions={newPondSelectOptions}
-        />
-      ))}
-      {submitError && (
-        <div className="bg-destructive/10 border-destructive/30 my-4 rounded-md border p-2 text-center">
-          <p className="text-destructive text-sm">{submitError}</p>
-        </div>
-      )}
-      <div className="mt-6">
-        <Link href="/ponds">
-          <Button variant="outline">Cancel</Button>
-        </Link>
+      {/* Name */}
+      <form.Field name="name" validators={{ onChange: PondSchema.shape.name }}>
+        {(field) => {
+          const isInvalid =
+            (!field.state.meta.isValid &&
+              (field.state.meta.isTouched ||
+                form.state.submissionAttempts > 0)) ||
+            Boolean(serverErrors.name);
 
-        <Button
-          disabled={!canSubmit || isSubmitting}
-          type="submit"
-          className="ml-2"
-        >
-          {isSubmitting ? (
-            <>
-              <Spinner /> Creating Pond...
-            </>
-          ) : (
-            "Create Pond"
-          )}
-        </Button>
-      </div>
+          const displayErrors = serverErrors.name
+            ? [{ message: serverErrors.name }]
+            : toFieldErrors(field.state.meta.errors);
+
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>
+                  Pond Name <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  id={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => {
+                    field.handleChange(e.target.value);
+                    if (serverErrors.name) {
+                      setServerErrors((prev) => ({ ...prev, name: undefined }));
+                    }
+                  }}
+                  aria-invalid={isInvalid}
+                  placeholder="e.g. Pond A"
+                />
+              </FieldContent>
+              {isInvalid && <FieldError errors={displayErrors} />}
+            </Field>
+          );
+        }}
+      </form.Field>
+
+      {/* Type */}
+      <form.Field name="type">
+        {(field) => (
+          <Field>
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>
+                Pond Type <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Select
+                items={POND_TYPES.map((type) => ({
+                  label: type,
+                  value: type,
+                }))}
+                value={field.state.value}
+                onValueChange={(value) =>
+                  field.handleChange(value as PondFormInput["type"])
+                }
+              >
+                <SelectTrigger id={field.name}>
+                  <SelectValue placeholder="Select pond type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {POND_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FieldContent>
+          </Field>
+        )}
+      </form.Field>
+
+      {/* Description */}
+      <form.Field
+        name="description"
+        validators={{ onChange: PondSchema.shape.description }}
+      >
+        {(field) => {
+          const isInvalid =
+            !field.state.meta.isValid &&
+            (field.state.meta.isTouched || form.state.submissionAttempts > 0);
+
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>
+                  Description (optional)
+                </FieldLabel>
+                <Textarea
+                  id={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={isInvalid}
+                  placeholder="Optional notes about this pond"
+                />
+              </FieldContent>
+              {isInvalid && (
+                <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+              )}
+            </Field>
+          );
+        }}
+      </form.Field>
+
+      <form.Subscribe selector={(state) => state.isSubmitting}>
+        {(isSubmitting) => (
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? (
+              <p className="flex items-center gap-2">
+                <Spinner />
+                <span>Creating Pond...</span>
+              </p>
+            ) : (
+              "Create Pond"
+            )}
+          </Button>
+        )}
+      </form.Subscribe>
     </form>
   );
 }

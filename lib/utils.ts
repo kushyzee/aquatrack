@@ -26,3 +26,11 @@ export function formatCurrency(num: number) {
     maximumFractionDigits: 0,
   }).format(num);
 }
+
+export function toFieldErrors(errors: unknown): { message: string }[] {
+  if (!Array.isArray(errors)) return [];
+  return errors
+    .map((e) => (typeof e === "string" ? e : e?.message))
+    .filter((message): message is string => Boolean(message))
+    .map((message) => ({ message }));
+}

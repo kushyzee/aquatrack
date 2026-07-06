@@ -1,36 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-
-interface FormDataProps {
-  name: string;
-  initialStock: string;
-  type: string;
-  species: string;
-  stockingDate: string;
-  description: string;
-}
-
-interface Normalized {
-  formData: FormDataProps;
-  type: string;
-  pondStatus: string;
-  pondCode: string;
-}
-
-function normalizePondType(type: string) {
-  const map: Record<string, string> = {
-    concrete: "Concrete Tank",
-    earthen: "Earthen Pond",
-    plastic: "Plastic Tank",
-    tarpaulin: "Tarpaulin Tank",
-  };
-  return map[type] ?? "Concrete Tank";
-}
-
-function derivePondStatus(initialStock: string) {
-  return Number(initialStock) < 1 ? "inactive" : "active";
-}
+import { PondSchema, type PondFormInput } from "./schema";
 
 function slugifyPondName(name: string) {
   return name.trim().replace(/\s+/g, "-");
@@ -63,42 +34,41 @@ async function makeUniquePondCode(name: string): Promise<string> {
   return `${baseCode}-${suffix}`;
 }
 
-export async function createPondWithFormattedData(formData: FormDataProps) {
-  const pondCode = await makeUniquePondCode(formData.name);
+type ActionResult =
+  | { error: string; errorField?: keyof PondFormInput }
+  | undefined;
 
-  const normalized: Normalized = {
-    formData,
-    type: normalizePondType(formData.type),
-    pondStatus: derivePondStatus(formData.initialStock),
-    pondCode,
-  };
-
-  const result = await newPondAction(normalized);
-
-  if (result?.error) {
-    return result;
-  }
-}
-
-export async function newPondAction(
-  normalized: Normalized,
+export async function createPondAction(
+  formData: PondFormInput,
+  retryCode?: string,
   retryCount = 0,
-): Promise<{ error?: string; errorField?: string } | undefined> {
-  const { formData, pondCode, pondStatus, type } = normalized;
+): Promise<ActionResult> {
+  const parsed = PondSchema.safeParse(formData);
 
+  if (!parsed.success) {
+    const firstIssue = parsed.error.issues[0];
+    return {
+      error: firstIssue.message,
+      errorField: firstIssue.path[0] as keyof PondFormInput,
+    };
+  }
+
+  const { name, type, description } = parsed.data;
   const supabase = await createClient();
 
   const { data: currentUser } = await supabase.auth.getUser();
   const userId = currentUser?.user?.id;
 
+  if (!userId) {
+    return { error: "You must be signed in to create a pond." };
+  }
+
+  const pondCode = retryCode ?? (await makeUniquePondCode(name));
+
   const { error } = await supabase.from("ponds").insert({
-    name: formData.name.trim(),
-    initial_fish_count: Number(formData.initialStock.trim()) ?? 0,
+    name,
     type,
-    species: formData.species || "Catfish",
-    stocking_date: formData.stockingDate,
-    description: formData.description || null,
-    status: pondStatus,
+    description: description || null,
     code: pondCode,
     created_by: userId,
   });
@@ -113,14 +83,9 @@ export async function newPondAction(
         };
       }
 
-      if (error.message.includes("ponds_code_unique")) {
-        if (retryCount < 3) {
-          const nextCode = `${pondCode}-${retryCount + 2}`;
-          return newPondAction(
-            { ...normalized, pondCode: nextCode },
-            retryCount + 1,
-          );
-        }
+      if (error.message.includes("ponds_code_unique") && retryCount < 3) {
+        const nextCode = `${pondCode}-${retryCount + 2}`;
+        return createPondAction(formData, nextCode, retryCount + 1);
       }
     }
 
