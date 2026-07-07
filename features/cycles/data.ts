@@ -19,6 +19,72 @@ export interface PondCycleBreakdown {
   current_fish_count: number;
 }
 
+type ResolveActiveCycleResult =
+  | { data: { cycleId: string; currentFishCount: number }; error?: undefined }
+  | {
+      data?: undefined;
+      error: "NO_ACTIVE_CYCLE" | "MULTIPLE_ACTIVE_CYCLES" | "UNKNOWN";
+    };
+
+export async function resolveActiveCycleForPond(
+  pondId: string,
+): Promise<ResolveActiveCycleResult> {
+  const supabase = await createClient();
+
+  const { data: stockRows, error: stockError } = await supabase
+    .from("pond_cycle_stock")
+    .select("cycle_id, current_fish_count")
+    .eq("pond_id", pondId);
+
+  if (stockError) {
+    console.error(stockError);
+    return { error: "UNKNOWN" };
+  }
+
+  if (!stockRows || stockRows.length === 0) {
+    return { error: "NO_ACTIVE_CYCLE" };
+  }
+
+  const { data: activeCycles, error: cycleError } = await supabase
+    .from("production_cycles")
+    .select("id")
+    .in(
+      "id",
+      stockRows.map((r) => r.cycle_id),
+    )
+    .eq("status", "active");
+
+  if (cycleError) {
+    console.error(cycleError);
+    return { error: "UNKNOWN" };
+  }
+
+  if (!activeCycles || activeCycles.length === 0) {
+    return { error: "NO_ACTIVE_CYCLE" };
+  }
+
+  if (activeCycles.length > 1) {
+    console.error(
+      "Data integrity violation: multiple active cycles for pond",
+      pondId,
+    );
+    return { error: "MULTIPLE_ACTIVE_CYCLES" };
+  }
+
+  const activeRow = stockRows.find((r) => r.cycle_id === activeCycles[0].id);
+
+  if (!activeRow) {
+    return { error: "UNKNOWN" };
+  }
+
+  return {
+    data: {
+      cycleId: activeRow.cycle_id,
+      currentFishCount: activeRow.current_fish_count,
+    },
+  };
+}
+
 export async function getCycleById(
   cycleId: string,
 ): Promise<CycleSummary | null> {

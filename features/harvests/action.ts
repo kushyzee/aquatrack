@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { newHarvestSchema } from "./schema";
+import { resolveActiveCycleForPond } from "@/features/cycles/data";
 
 interface CreateHarvestInput {
   pond_id: string;
@@ -17,45 +18,52 @@ export async function createHarvestAction(input: CreateHarvestInput) {
   const parsed = newHarvestSchema.safeParse(input);
 
   if (!parsed.success) {
-    const fieldErrors = parsed.error.flatten().fieldErrors;
-    const firstField = Object.keys(fieldErrors)[0] as keyof typeof fieldErrors;
+    const firstIssue = parsed.error.issues[0];
     return {
-      error:
-        (firstField ? fieldErrors[firstField]?.[0] : undefined) ??
-        "Invalid input.",
-      errorField: firstField,
+      error: firstIssue.message,
+      errorField: firstIssue.path[0] as keyof CreateHarvestInput,
     };
   }
 
-  const supabase = await createClient();
+  const resolution = await resolveActiveCycleForPond(parsed.data.pond_id);
 
-  const { data: stock, error: stockError } = await supabase
-    .from("pond_current_stock")
-    .select("current_fish_count")
-    .eq("pond_id", parsed.data.pond_id)
-    .single();
+  if (resolution.error === "NO_ACTIVE_CYCLE") {
+    return {
+      error: "This pond has no active cycle.",
+      errorField: "pond_id" as const,
+    };
+  }
 
-  if (stockError || !stock) {
+  if (resolution.error === "MULTIPLE_ACTIVE_CYCLES") {
+    return {
+      error: "A data integrity issue was detected. Please contact support.",
+    };
+  }
+
+  if (resolution.error || !resolution.data) {
     return { error: "Could not verify pond stock. Please try again." };
   }
 
   const fishCount = Number(parsed.data.fish_count);
-  if (fishCount > stock.current_fish_count) {
+
+  if (fishCount > resolution.data.currentFishCount) {
     return {
-      error: `Only ${stock.current_fish_count} fish available in this pond.`,
-      errorField: "fish_count",
+      error: `Only ${resolution.data.currentFishCount} fish available in this pond.`,
+      errorField: "fish_count" as const,
     };
   }
 
+  const supabase = await createClient();
   const { data: currentUser } = await supabase.auth.getClaims();
   const userId = currentUser?.claims.sub;
 
   if (!userId) {
-    return { error: "You must be logged in to start a harvest." };
+    return { error: "You must be signed in to record a harvest." };
   }
 
   const { error } = await supabase.from("harvests").insert({
     pond_id: parsed.data.pond_id,
+    cycle_id: resolution.data.cycleId,
     harvest_date: parsed.data.harvest_date,
     quantity_kg: Number(parsed.data.quantity_kg),
     fish_count: fishCount,

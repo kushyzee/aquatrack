@@ -16,12 +16,6 @@ interface HarvestQueryRow extends Omit<HarvestRecord, "pond_name"> {
   ponds: { name: string } | null;
 }
 
-export interface PondWithStock {
-  pond_id: string;
-  pond_name: string;
-  current_fish_count: number;
-}
-
 export interface HarvestTotals {
   total_weight_kg: number;
   total_quantity: number;
@@ -41,23 +35,6 @@ export async function getHarvestTotals(): Promise<HarvestTotals> {
   }
 
   return data;
-}
-
-export async function getActivePondsWithStock(): Promise<PondWithStock[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("pond_current_stock")
-    .select("pond_id, pond_name, current_fish_count")
-    .eq("status", "active")
-    .order("pond_name");
-
-  if (error) {
-    console.error(error);
-    return [];
-  }
-
-  return data ?? [];
 }
 
 export async function getHarvestRecords(): Promise<HarvestRecord[]> {

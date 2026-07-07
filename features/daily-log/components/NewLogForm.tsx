@@ -108,6 +108,10 @@ export default function NewLogForm({
                 </FieldLabel>
                 <Select
                   value={field.state.value}
+                  items={pondOptions.map((pond) => ({
+                    value: pond.id,
+                    label: pond.name,
+                  }))}
                   onValueChange={(value) => {
                     field.handleChange(value ?? "");
                     if (serverErrors.pondId) {

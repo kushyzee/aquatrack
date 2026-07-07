@@ -25,10 +25,10 @@ export const newHarvestSchema = z.object({
   revenue: z
     .string()
     .trim()
-    .optional()
     .refine((val) => !val || Number(val) >= 0, {
       message: "Revenue cannot be negative.",
-    }),
+    })
+    .optional(),
   buyer: z.string().trim().optional(),
   notes: z.string().trim().optional(),
 });

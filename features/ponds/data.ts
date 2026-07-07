@@ -9,6 +9,7 @@ export interface PondWithCycleStatus {
   status: string;
   cycleId: string | null;
   species: string | null;
+  currentFishCount: number;
 }
 
 export async function getPondsWithCycleStatus(): Promise<
@@ -18,7 +19,9 @@ export async function getPondsWithCycleStatus(): Promise<
 
   const { data, error } = await supabase
     .from("pond_current_stock")
-    .select("pond_id, pond_name, pond_code, status, cycle_id, species")
+    .select(
+      "pond_id, pond_name, pond_code, status, cycle_id, species, current_fish_count",
+    )
     .eq("status", "active")
     .order("pond_name");
 
@@ -34,6 +37,7 @@ export async function getPondsWithCycleStatus(): Promise<
     status: p.status,
     cycleId: p.cycle_id,
     species: p.species,
+    currentFishCount: p.current_fish_count,
   }));
 }
 
