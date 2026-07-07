@@ -6,10 +6,10 @@ const optionalNumberString = (label: string, type: string = "") => {
       .string()
       .trim()
       .refine((v) => v === "" || !Number.isNaN(Number(v)), {
-        message: "pH must be a valid number",
+        message: `${label} must be a valid number`,
       })
       .refine((v) => v === "" || (Number(v) >= 0 && Number(v) <= 14), {
-        message: "pH must be between 0 and 14",
+        message: `${label} must be between 0 and 14`,
       });
   } else if (type === "temp") {
     return z
@@ -32,8 +32,8 @@ const optionalNumberString = (label: string, type: string = "") => {
 };
 
 export const newLogFormSchema = z.object({
-  pondName: z.string(),
-  logDate: z.string(),
+  pondId: z.uuid({ message: "Please select a pond." }),
+  logDate: z.string().min(1, { message: "Log date is required." }),
   feedType: z.string(),
   feedQuantity: optionalNumberString("Feed quantity"),
   mortalityCount: optionalNumberString("Mortality count"),

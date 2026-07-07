@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const newHarvestSchema = z.object({
-  pond_id: z.string().uuid({ message: "Please select a pond." }),
+  pond_id: z.uuid({ message: "Please select a pond." }),
   harvest_date: z
     .string()
     .min(1, "Harvest date is required.")
@@ -10,24 +10,27 @@ export const newHarvestSchema = z.object({
     }),
   quantity_kg: z
     .string()
+    .trim()
     .min(1, "Quantity is required.")
     .refine((val) => Number(val) > 0, {
       message: "Quantity must be greater than 0.",
     }),
   fish_count: z
     .string()
+    .trim()
     .min(1, "Fish count is required.")
     .refine((val) => Number.isInteger(Number(val)) && Number(val) > 0, {
       message: "Fish count must be a positive whole number.",
     }),
   revenue: z
     .string()
+    .trim()
     .optional()
     .refine((val) => !val || Number(val) >= 0, {
       message: "Revenue cannot be negative.",
     }),
-  buyer: z.string().optional(),
-  notes: z.string().optional(),
+  buyer: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
 });
 
 export type NewHarvestFormValues = z.infer<typeof newHarvestSchema>;

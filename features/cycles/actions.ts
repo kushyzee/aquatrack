@@ -58,8 +58,12 @@ export async function createCycleAction(input: CreateCycleInput) {
   }
 
   const supabase = await createClient();
-  const { data: currentUser } = await supabase.auth.getUser();
-  const userId = currentUser?.user?.id;
+  const { data: currentUser } = await supabase.auth.getClaims();
+  const userId = currentUser?.claims.sub;
+
+  if (!userId) {
+    return { error: "You must be logged in to start a cycle." };
+  }
 
   const { data, error } = await supabase.rpc("create_cycle_with_stockings", {
     p_species: parsed.data.species,

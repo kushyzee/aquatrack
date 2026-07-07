@@ -1,80 +1,52 @@
 "use client";
 
-import { useForm, useStore } from "@tanstack/react-form";
-import FormSection from "./FormSection";
+import { useState } from "react";
+import { useForm } from "@tanstack/react-form";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import FormFields from "@/features/ponds/components/FormFields";
-import { createDailyLog } from "../action";
 import { toast } from "sonner";
-import { newLogFormSchema } from "../schema";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Field,
+  FieldContent,
+  FieldLabel,
+  FieldError,
+} from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import FormSection from "./FormSection";
+import { createDailyLog } from "../action";
+import { newLogFormSchema, type NewLogFormData } from "../schema";
+import { cn, toFieldErrors } from "@/lib/utils";
+import type { PondWithCycleStatus } from "@/features/ponds/data";
 
 interface NewLogFormProps {
-  selectValue: string | undefined;
-  pondId: string | undefined;
-  pondOptions: { value: string; label: string; id?: string }[];
+  preselectedPondId?: string;
+  backHref: string;
+  pondOptions: PondWithCycleStatus[];
 }
 
+type ServerErrors = Partial<Record<keyof NewLogFormData, string>>;
+
 export default function NewLogForm({
-  selectValue,
-  pondId,
+  preselectedPondId,
+  backHref,
   pondOptions,
 }: NewLogFormProps) {
+  const [serverErrors, setServerErrors] = useState<ServerErrors>({});
+  const today = new Date().toISOString().split("T")[0];
+
   const form = useForm({
-    validators: {
-      // onChangeAsync: async ({ value, formApi }) => {
-      //   if (
-      //     formApi.getFieldMeta("pondName")?.isDirty ||
-      //     formApi.getFieldMeta("logDate")?.isDirty
-      //   ) {
-      //     const selectedPondId = pondOptions.find(
-      //       (pond) => pond.value === value.pondName,
-      //     )?.id;
-      //     console.log(value.logDate);
-
-      //     const result = await checkLogExists(selectedPondId!, value.logDate);
-
-      //     if (result?.exists) {
-      //       toast.error("A log already exists for this date and pond.");
-      //       formApi.setFieldMeta("logDate", (prev) => ({
-      //         ...prev,
-      //         isTouched: true,
-      //       }));
-
-      //       return {
-      //         fields: {
-      //           pondName: "A log already exists for this date and pond.",
-      //           logDate: "A log already exists for this date and pond.",
-      //         },
-      //       };
-      //     } else {
-      //       // formApi.resetFieldMeta({});
-      //     }
-      //   }
-      // },
-      onBlur: newLogFormSchema,
-      onSubmitAsync: async ({ value }) => {
-        value.pondName = value.pondName
-          ? value.pondName
-          : selectValue || pondOptions[0]?.value;
-
-        const selectedPondId = pondOptions.find(
-          (pond) => pond.value === value.pondName,
-        )?.id;
-
-        const result = await createDailyLog(value, selectedPondId);
-
-        if (result?.error) {
-          toast.error("A log already exists for this date and pond.");
-        } else {
-          toast.success("Log created successfully!");
-        }
-      },
-    },
     defaultValues: {
-      pondName: "",
-      logDate: new Date().toISOString().split("T")[0],
+      pondId: preselectedPondId ?? "",
+      logDate: today,
       feedType: "",
       feedQuantity: "",
       mortalityCount: "",
@@ -82,123 +54,330 @@ export default function NewLogForm({
       temperature: "",
       pH: "",
       notes: "",
-    },
-    onSubmit({ formApi, value }) {
-      console.log(value);
+    } as NewLogFormData,
+    onSubmit: async ({ value, formApi }) => {
+      const result = await createDailyLog(value);
 
-      formApi.resetField("mortalityCount");
-      formApi.resetField("suspectedCause");
+      if (result?.error) {
+        if (result.errorField) {
+          setServerErrors({ [result.errorField]: result.error });
+        } else {
+          toast.error(result.error);
+        }
+        return;
+      }
+
+      toast.success("Log created successfully!");
+      formApi.reset();
+      if (preselectedPondId) {
+        formApi.setFieldValue("pondId", preselectedPondId);
+      }
     },
   });
 
-  const isSubmitting = useStore(form.store, (s) => s.isSubmitting);
-  const canSubmit = useStore(form.store, (s) => s.canSubmit);
-
   return (
     <form
-      id="new-log"
       onSubmit={(e) => {
         e.preventDefault();
-        void form.handleSubmit();
+        e.stopPropagation();
+        form.handleSubmit();
       }}
       className="space-y-5"
     >
-      <FormFields
-        form={form}
-        name="pondName"
-        label="Pond"
-        isRequired={true}
-        type="select"
-        selectDefaultValue={selectValue || pondOptions[0]?.value}
-        selectOptions={pondOptions}
-      />
-      <FormFields
-        form={form}
+      {/* Pond */}
+      <form.Field
+        name="pondId"
+        validators={{ onChange: newLogFormSchema.shape.pondId }}
+      >
+        {(field) => {
+          const isInvalid =
+            (!field.state.meta.isValid &&
+              (field.state.meta.isTouched ||
+                form.state.submissionAttempts > 0)) ||
+            Boolean(serverErrors.pondId);
+
+          const displayErrors = serverErrors.pondId
+            ? [{ message: serverErrors.pondId }]
+            : toFieldErrors(field.state.meta.errors);
+
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>
+                  Pond <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(value) => {
+                    field.handleChange(value ?? "");
+                    if (serverErrors.pondId) {
+                      setServerErrors((prev) => ({
+                        ...prev,
+                        pondId: undefined,
+                      }));
+                    }
+                  }}
+                >
+                  <SelectTrigger id={field.name} aria-invalid={isInvalid}>
+                    <SelectValue placeholder="Select a pond" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pondOptions.map((pond) => (
+                      <SelectItem
+                        key={pond.id}
+                        value={pond.id}
+                        disabled={!pond.cycleId}
+                      >
+                        {pond.name}
+                        {!pond.cycleId ? " (No active cycle)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FieldContent>
+              {isInvalid && <FieldError errors={displayErrors} />}
+            </Field>
+          );
+        }}
+      </form.Field>
+
+      {/* Date */}
+      <form.Field
         name="logDate"
-        label="Date"
-        isRequired={false}
-        type="date"
-      />
+        validators={{ onChange: newLogFormSchema.shape.logDate }}
+      >
+        {(field) => {
+          const isInvalid =
+            !field.state.meta.isValid &&
+            (field.state.meta.isTouched || form.state.submissionAttempts > 0);
+
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>
+                  Date <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  id={field.name}
+                  type="date"
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={isInvalid}
+                />
+              </FieldContent>
+              {isInvalid && (
+                <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+              )}
+            </Field>
+          );
+        }}
+      </form.Field>
+
       <FormSection title="Feed">
-        <FormFields
-          form={form}
-          name="feedType"
-          label="Type"
-          isRequired={false}
-          type="text"
-          placeholder="e.g., Local feed, blue crown"
-        />
-        <FormFields
-          form={form}
+        <form.Field name="feedType">
+          {(field) => (
+            <Field>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+                <Input
+                  id={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="e.g., Local feed, blue crown"
+                />
+              </FieldContent>
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field
           name="feedQuantity"
-          label="Quantity (kg)"
-          isRequired={false}
-          type="number"
-          placeholder="0.0"
-        />
+          validators={{ onChange: newLogFormSchema.shape.feedQuantity }}
+        >
+          {(field) => {
+            const isInvalid =
+              !field.state.meta.isValid &&
+              (field.state.meta.isTouched || form.state.submissionAttempts > 0);
+
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Quantity (kg)</FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="number"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="0.0"
+                  />
+                </FieldContent>
+                {isInvalid && (
+                  <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
       </FormSection>
+
       <FormSection title="Mortality">
-        <FormFields
-          form={form}
+        <form.Field
           name="mortalityCount"
-          label="Count"
-          isRequired={false}
-          type="number"
-          placeholder="0"
-        />
-        <FormFields
-          form={form}
-          name="suspectedCause"
-          label="Suspected Cause"
-          isRequired={false}
-          type="text"
-          placeholder="e.g., Disease, poor water quality"
-        />
+          validators={{ onChange: newLogFormSchema.shape.mortalityCount }}
+        >
+          {(field) => {
+            const isInvalid =
+              !field.state.meta.isValid &&
+              (field.state.meta.isTouched || form.state.submissionAttempts > 0);
+
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Count</FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="number"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="0"
+                  />
+                </FieldContent>
+                {isInvalid && (
+                  <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
+
+        <form.Field name="suspectedCause">
+          {(field) => (
+            <Field>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Suspected Cause</FieldLabel>
+                <Input
+                  id={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="e.g., Disease, poor water quality"
+                />
+              </FieldContent>
+            </Field>
+          )}
+        </form.Field>
       </FormSection>
+
       <FormSection title="Water Observations">
-        <FormFields
-          form={form}
+        <form.Field
           name="temperature"
-          label="Temperature (°C)"
-          isRequired={false}
-          type="number"
-          placeholder="e.g., 28.5"
-        />
-        <FormFields
-          form={form}
+          validators={{ onChange: newLogFormSchema.shape.temperature }}
+        >
+          {(field) => {
+            const isInvalid =
+              !field.state.meta.isValid &&
+              (field.state.meta.isTouched || form.state.submissionAttempts > 0);
+
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>Temperature (°C)</FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="number"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="e.g., 28.5"
+                  />
+                </FieldContent>
+                {isInvalid && (
+                  <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
+
+        <form.Field
           name="pH"
-          label="pH"
-          isRequired={false}
-          type="number"
-          placeholder="e.g., 6.5"
-        />
+          validators={{ onChange: newLogFormSchema.shape.pH }}
+        >
+          {(field) => {
+            const isInvalid =
+              !field.state.meta.isValid &&
+              (field.state.meta.isTouched || form.state.submissionAttempts > 0);
+
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldContent>
+                  <FieldLabel htmlFor={field.name}>pH</FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="number"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="e.g., 6.5"
+                  />
+                </FieldContent>
+                {isInvalid && (
+                  <FieldError errors={toFieldErrors(field.state.meta.errors)} />
+                )}
+              </Field>
+            );
+          }}
+        </form.Field>
       </FormSection>
-      <FormFields
-        form={form}
-        name="notes"
-        label="Notes"
-        isRequired={false}
-        type="text"
-        placeholder="Additional observations..."
-      />
-      <div className="mt-6">
-        <Link href={selectValue ? `/ponds/${pondId}` : "/ponds"}>
-          <Button variant="outline">Cancel</Button>
+
+      <form.Field name="notes">
+        {(field) => (
+          <Field>
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+              <Textarea
+                id={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="Additional observations..."
+              />
+            </FieldContent>
+          </Field>
+        )}
+      </form.Field>
+
+      <div className="mt-6 flex gap-2">
+        <Link
+          href={backHref}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          Cancel
         </Link>
 
-        <Button
-          disabled={!canSubmit || isSubmitting}
-          type="submit"
-          className="ml-2"
+        <form.Subscribe
+          selector={(state) => [state.canSubmit, state.isSubmitting] as const}
         >
-          {isSubmitting ? (
-            <>
-              <Spinner /> Saving Log...
-            </>
-          ) : (
-            "Save Log"
+          {([canSubmit, isSubmitting]) => (
+            <Button disabled={!canSubmit || isSubmitting} type="submit">
+              {isSubmitting ? (
+                <>
+                  <Spinner /> Saving Log...
+                </>
+              ) : (
+                "Save Log"
+              )}
+            </Button>
           )}
-        </Button>
+        </form.Subscribe>
       </div>
     </form>
   );

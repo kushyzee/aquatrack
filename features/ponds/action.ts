@@ -56,8 +56,8 @@ export async function createPondAction(
   const { name, type, description } = parsed.data;
   const supabase = await createClient();
 
-  const { data: currentUser } = await supabase.auth.getUser();
-  const userId = currentUser?.user?.id;
+  const { data: currentUser } = await supabase.auth.getClaims();
+  const userId = currentUser?.claims.sub;
 
   if (!userId) {
     return { error: "You must be signed in to create a pond." };

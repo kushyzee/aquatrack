@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { newHarvestSchema } from "./schema";
-import { z } from "zod";
 
 interface CreateHarvestInput {
   pond_id: string;
@@ -48,8 +47,12 @@ export async function createHarvestAction(input: CreateHarvestInput) {
     };
   }
 
-  const { data: currentUser } = await supabase.auth.getUser();
-  const userId = currentUser?.user?.id;
+  const { data: currentUser } = await supabase.auth.getClaims();
+  const userId = currentUser?.claims.sub;
+
+  if (!userId) {
+    return { error: "You must be logged in to start a harvest." };
+  }
 
   const { error } = await supabase.from("harvests").insert({
     pond_id: parsed.data.pond_id,

@@ -11,7 +11,7 @@ export const cycleStockingSchema = z.object({
 });
 
 export const newCycleSchema = z.object({
-  species: z.string().min(1, "Species is required."),
+  species: z.string().trim().min(1, "Species is required."),
   start_date: z
     .string()
     .min(1, "Start date is required.")
@@ -29,7 +29,7 @@ export const newCycleSchema = z.object({
 });
 
 export const endCycleSchema = z.object({
-  cycleId: z.string().uuid(),
+  cycleId: z.uuid({ message: "Invalid cycle ID." }),
   endDate: z
     .string()
     .refine(

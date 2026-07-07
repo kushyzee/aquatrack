@@ -2,6 +2,41 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
+export interface PondWithCycleStatus {
+  id: string;
+  name: string;
+  code: string | null;
+  status: string;
+  cycleId: string | null;
+  species: string | null;
+}
+
+export async function getPondsWithCycleStatus(): Promise<
+  PondWithCycleStatus[]
+> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("pond_current_stock")
+    .select("pond_id, pond_name, pond_code, status, cycle_id, species")
+    .eq("status", "active")
+    .order("pond_name");
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return (data ?? []).map((p) => ({
+    id: p.pond_id,
+    name: p.pond_name,
+    code: p.pond_code,
+    status: p.status,
+    cycleId: p.cycle_id,
+    species: p.species,
+  }));
+}
+
 export async function fetchPonds() {
   const supabase = await createClient();
 
