@@ -20,7 +20,6 @@ export default async function PondDetailPage({
     <div>
       <BackButton href="/ponds" />
       <PondCard
-        id={data?.id || "1"}
         name={data?.pond_name || "Unknown Pond"}
         status={data?.status || "inactive"}
         type={data?.type}

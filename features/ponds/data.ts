@@ -11,6 +11,7 @@ export interface PondWithCycleStatus {
   type: string;
   cycleId: string | null;
   species: string | null;
+  currentFishCount: number;
 }
 
 export async function getPondsWithCycleStatus({
@@ -20,7 +21,9 @@ export async function getPondsWithCycleStatus({
 
   let query = supabase
     .from("pond_current_stock")
-    .select("pond_id, pond_name, pond_code, status, type, cycle_id, species");
+    .select(
+      "pond_id, pond_name, pond_code, status, type, cycle_id, species, current_fish_count",
+    );
 
   query = activeOnly
     ? query.eq("status", "active").order("pond_name", { ascending: true })
@@ -43,6 +46,7 @@ export async function getPondsWithCycleStatus({
     type: p.type,
     cycleId: p.cycle_id,
     species: p.species,
+    currentFishCount: p.current_fish_count,
   }));
 }
 
