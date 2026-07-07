@@ -38,10 +38,11 @@ export interface AuthPageWrapperProps {
   children: React.ReactNode;
 }
 
+export type PondStatus = "active" | "inactive" | "archived";
+
 export interface PondCardProps {
-  id: string;
   name: string;
-  status: "active" | "inactive";
+  status: PondStatus;
   species: string | null;
   type: string;
   isPondDetailsPage?: boolean;

@@ -1,33 +1,38 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { PondStatus } from "@/lib/types";
 
 export interface PondWithCycleStatus {
   id: string;
   name: string;
   code: string | null;
-  status: string;
+  status: PondStatus;
+  type: string;
   cycleId: string | null;
   species: string | null;
-  currentFishCount: number;
 }
 
-export async function getPondsWithCycleStatus(): Promise<
-  PondWithCycleStatus[]
-> {
+export async function getPondsWithCycleStatus({
+  activeOnly = true,
+}: { activeOnly?: boolean } = {}): Promise<PondWithCycleStatus[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("pond_current_stock")
-    .select(
-      "pond_id, pond_name, pond_code, status, cycle_id, species, current_fish_count",
-    )
-    .eq("status", "active")
-    .order("pond_name");
+    .select("pond_id, pond_name, pond_code, status, type, cycle_id, species");
+
+  query = activeOnly
+    ? query.eq("status", "active").order("pond_name", { ascending: true })
+    : query
+        .order("status", { ascending: true })
+        .order("created_at", { ascending: false });
+
+  const { data, error } = await query;
 
   if (error) {
-    console.error(error);
-    return [];
+    console.error("Error fetching ponds with cycle status:", error);
+    throw new Error(`Failed to fetch ponds: ${error.message}`);
   }
 
   return (data ?? []).map((p) => ({
@@ -35,27 +40,10 @@ export async function getPondsWithCycleStatus(): Promise<
     name: p.pond_name,
     code: p.pond_code,
     status: p.status,
+    type: p.type,
     cycleId: p.cycle_id,
     species: p.species,
-    currentFishCount: p.current_fish_count,
   }));
-}
-
-export async function fetchPonds() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("ponds")
-    .select("*")
-    .order("status", { ascending: true })
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching ponds:", error);
-    throw new Error(`Failed to fetch ponds: ${error.message}`);
-  }
-
-  return data;
 }
 
 export async function getPondStockSummary(pondId: string) {
@@ -103,8 +91,8 @@ export async function getHarvestHistory(pondId: string) {
     .order("harvest_date", { ascending: false });
 
   if (error) {
-    console.error("Error fetching pond daily logs:", error);
-    throw new Error(`Failed to fetch pond daily logs: ${error.message}`);
+    console.error("Error fetching harvest history:", error);
+    throw new Error(`Failed to fetch harvest history: ${error.message}`);
   }
 
   return data;
