@@ -10,10 +10,12 @@ export default async function PondsList() {
       {pondsData.map((pond) => (
         <Link key={pond.id} href={`/ponds/${pond.id}`}>
           <PondCard
+            id={pond.id}
             name={pond.name}
             species={pond.species}
             status={pond.status}
             type={pond.type}
+            currentFishCount={pond.currentFishCount}
           />
         </Link>
       ))}

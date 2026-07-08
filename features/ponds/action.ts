@@ -1,7 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { PondSchema, type PondFormInput } from "./schema";
+import {
+  PondSchema,
+  UpdatePondStatusInput,
+  updatePondStatusSchema,
+  type PondFormInput,
+} from "./schema";
 import { revalidatePath } from "next/cache";
 
 function slugifyPondName(name: string) {
@@ -94,4 +99,60 @@ export async function createPondAction(
     return { error: "An unexpected error occurred. Please try again." };
   }
   revalidatePath("/ponds");
+}
+
+export async function updatePondStatusAction(
+  input: UpdatePondStatusInput,
+): Promise<ActionResult> {
+  const parsed = updatePondStatusSchema.safeParse(input);
+
+  if (!parsed.success) {
+    const firstIssue = parsed.error.issues[0];
+    return {
+      error: firstIssue.message,
+      errorField: firstIssue.path[0] as keyof UpdatePondStatusInput,
+    };
+  }
+
+  const { pondId, status } = parsed.data;
+  const supabase = await createClient();
+
+  const { data: currentUser } = await supabase.auth.getClaims();
+  const userId = currentUser?.claims.sub;
+
+  if (!userId) {
+    return { error: "You must be signed in to update a pond." };
+  }
+
+  if (status !== "active") {
+    const { data: stock, error: stockError } = await supabase
+      .from("pond_current_stock")
+      .select("current_fish_count")
+      .eq("pond_id", pondId)
+      .single();
+
+    if (stockError) {
+      console.error({ stockError });
+      return { error: "Could not verify pond stock. Please try again." };
+    }
+
+    if ((stock?.current_fish_count ?? 0) > 0) {
+      return {
+        error:
+          "This pond still has fish from an active cycle. Harvest or transfer them out before changing its status.",
+      };
+    }
+  }
+
+  const { error } = await supabase
+    .from("ponds")
+    .update({ status })
+    .eq("id", pondId);
+
+  if (error) {
+    console.error({ error });
+    return { error: "An unexpected error occurred. Please try again." };
+  }
+
+  revalidatePath(`/ponds/${pondId}`);
 }

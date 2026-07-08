@@ -18,10 +18,12 @@ export default async function PondDetailPage({
     <div>
       <BackButton href="/ponds" />
       <PondCard
+        id={pondId}
         name={data?.pond_name || "Unknown Pond"}
         status={data?.status || "inactive"}
         type={data?.type}
         species={data?.species}
+        currentFishCount={data?.current_fish_count || 0}
         isPondDetailsPage={true}
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

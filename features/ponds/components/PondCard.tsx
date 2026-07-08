@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PondCardProps, PondStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Layers } from "lucide-react";
+import PondStatusSelect from "./PondStatusSelect";
 
 const STATUS_STYLES: Record<
   PondStatus,
@@ -29,11 +30,13 @@ const STATUS_STYLES: Record<
 };
 
 export default function PondCard({
+  id,
   name,
   species,
   status,
   type,
   isPondDetailsPage,
+  currentFishCount,
   children,
 }: PondCardProps) {
   const styles = STATUS_STYLES[status];
@@ -46,16 +49,26 @@ export default function PondCard({
       )}
     >
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-4">
             <div className={cn("rounded-md p-2", styles.iconBg)}>
               <Layers className={cn("h-6 w-6", styles.icon)} />
             </div>
-            <CardTitle className="text-lg font-semibold">{name}</CardTitle>
+            <CardTitle className="text-lg leading-tight font-semibold">
+              {name}
+            </CardTitle>
           </div>
-          <Badge className={styles.badge}>
-            {status.slice(0, 1).toUpperCase() + status.slice(1)}
-          </Badge>
+          {isPondDetailsPage ? (
+            <PondStatusSelect
+              pondId={id}
+              status={status}
+              currentFishCount={currentFishCount}
+            />
+          ) : (
+            <Badge className={styles.badge}>
+              {status.slice(0, 1).toUpperCase() + status.slice(1)}
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent>
