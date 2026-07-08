@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -29,6 +28,7 @@ import type { PondWithCycleStatus } from "@/features/ponds/data";
 
 interface NewHarvestFormProps {
   ponds: PondWithCycleStatus[];
+  preselectedPondId?: string;
 }
 
 interface FormValues {
@@ -43,14 +43,19 @@ interface FormValues {
 
 type ServerErrors = Partial<Record<keyof FormValues, string>>;
 
-export default function NewHarvestForm({ ponds }: NewHarvestFormProps) {
-  const router = useRouter();
-  const [selectedStock, setSelectedStock] = useState<number | null>(null);
+export default function NewHarvestForm({
+  ponds,
+  preselectedPondId,
+}: NewHarvestFormProps) {
+  const preselectedPond = ponds.find((p) => p.id === preselectedPondId);
+  const [selectedStock, setSelectedStock] = useState<number | null>(
+    preselectedPond?.currentFishCount ?? null,
+  );
   const [serverErrors, setServerErrors] = useState<ServerErrors>({});
 
   const form = useForm({
     defaultValues: {
-      pond_id: "",
+      pond_id: preselectedPondId ?? "",
       harvest_date: new Date().toISOString().slice(0, 10),
       quantity_kg: "",
       fish_count: "",
@@ -58,7 +63,7 @@ export default function NewHarvestForm({ ponds }: NewHarvestFormProps) {
       buyer: "",
       notes: "",
     } as FormValues,
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const result = await createHarvestAction(value);
 
       if (result?.error) {
@@ -71,7 +76,10 @@ export default function NewHarvestForm({ ponds }: NewHarvestFormProps) {
       }
 
       toast.success("Harvest recorded.");
-      router.push("/harvests");
+      formApi.reset();
+      if (preselectedPondId) {
+        formApi.setFieldValue("pond_id", preselectedPondId);
+      }
     },
   });
 
@@ -292,9 +300,7 @@ export default function NewHarvestForm({ ponds }: NewHarvestFormProps) {
         validators={{
           onChange: ({ value }) => {
             const result = newHarvestSchema.shape.revenue.safeParse(value);
-            return result.success
-              ? undefined
-              : result.error.issues[0]?.message;
+            return result.success ? undefined : result.error.issues[0]?.message;
           },
         }}
       >

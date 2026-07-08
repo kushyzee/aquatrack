@@ -1,11 +1,9 @@
 import BackButton from "@/components/BackButton";
-import { Button } from "@/components/ui/button";
 import PondCard from "@/features/ponds/components/PondCard";
+import PondDetailPageButtons from "@/features/ponds/components/PondDetailPageButtons";
 import PondDetailTab from "@/features/ponds/components/PondDetailTab";
 import { getPondStockSummary } from "@/features/ponds/data";
 import PondCardStat from "@/features/ponds/PondCardStat";
-import { Container, Plus } from "lucide-react";
-import Link from "next/link";
 
 export default async function PondDetailPage({
   params,
@@ -40,18 +38,8 @@ export default async function PondDetailPage({
         </div>
       </PondCard>
 
-      <div className="mt-6 mb-7 flex flex-col gap-4">
-        <Link href={`/daily-logs/${pondId}`}>
-          <Button className="w-full">
-            <Plus data-icon="inline-start" /> Add Today&apos;s Log
-          </Button>
-        </Link>
-        <Link href="/harvests">
-          <Button className="w-full" variant="outline" data-icon="inline-start">
-            <Container /> Add Harvest
-          </Button>
-        </Link>
-      </div>
+      <PondDetailPageButtons data={data} pondId={pondId} />
+
       <PondDetailTab pondId={pondId} />
     </div>
   );

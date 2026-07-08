@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { PondSchema, type PondFormInput } from "./schema";
+import { revalidatePath } from "next/cache";
 
 function slugifyPondName(name: string) {
   return name.trim().replace(/\s+/g, "-");
@@ -92,4 +93,5 @@ export async function createPondAction(
     console.error({ error });
     return { error: "An unexpected error occurred. Please try again." };
   }
+  revalidatePath("/ponds");
 }

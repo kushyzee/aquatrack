@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
 import { PondSchema, type PondFormInput } from "../schema";
@@ -30,7 +29,6 @@ const POND_TYPES = PondSchema.shape.type.options;
 type ServerErrors = Partial<Record<keyof PondFormInput, string>>;
 
 export default function NewPondForm() {
-  const router = useRouter();
   const [serverErrors, setServerErrors] = useState<ServerErrors>({});
 
   const form = useForm({
@@ -39,7 +37,7 @@ export default function NewPondForm() {
       type: "Concrete",
       description: "",
     } as PondFormInput,
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       const result = await createPondAction(value);
 
       if (result?.error) {
@@ -52,7 +50,7 @@ export default function NewPondForm() {
       }
 
       toast.success("Pond created successfully.");
-      router.push("/ponds");
+      formApi.reset();
     },
   });
 

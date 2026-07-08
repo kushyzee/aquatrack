@@ -3,7 +3,12 @@ import CardWrapper from "@/components/CardWrapper";
 import NewHarvestForm from "@/features/harvests/components/NewHarvestForm";
 import { getPondsWithCycleStatus } from "@/features/ponds/data";
 
-export default async function NewHarvestPage() {
+export default async function NewHarvestPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pondId?: string }>;
+}) {
+  const { pondId } = await searchParams;
   const ponds = await getPondsWithCycleStatus();
 
   return (
@@ -13,7 +18,7 @@ export default async function NewHarvestPage() {
         title="Record Harvest"
         description="Log a new harvest event for one of your ponds"
       >
-        <NewHarvestForm ponds={ponds} />
+        <NewHarvestForm ponds={ponds} preselectedPondId={pondId} />
       </CardWrapper>
     </div>
   );

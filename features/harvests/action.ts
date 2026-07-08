@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { newHarvestSchema } from "./schema";
 import { resolveActiveCycleForPond } from "@/features/cycles/data";
+import { revalidatePath } from "next/cache";
 
 interface CreateHarvestInput {
   pond_id: string;
@@ -78,5 +79,7 @@ export async function createHarvestAction(input: CreateHarvestInput) {
     return { error: "An unexpected error occurred. Please try again." };
   }
 
+  revalidatePath("/harvests");
+  revalidatePath("/ponds");
   return { success: true };
 }
