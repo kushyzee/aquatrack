@@ -26,6 +26,40 @@ type ResolveActiveCycleResult =
       error: "NO_ACTIVE_CYCLE" | "MULTIPLE_ACTIVE_CYCLES" | "UNKNOWN";
     };
 
+export interface CycleLabel {
+  id: string;
+  species: string;
+  status: "active" | "completed";
+  startDate: string;
+  endDate: string | null;
+}
+
+export async function getCyclesByIds(
+  cycleIds: string[],
+): Promise<CycleLabel[]> {
+  if (cycleIds.length === 0) return [];
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("production_cycles")
+    .select("id, species, status, start_date, end_date")
+    .in("id", cycleIds);
+
+  if (error) {
+    console.error("Error fetching cycles by ids:", error);
+    throw new Error(`Failed to fetch cycles: ${error.message}`);
+  }
+
+  return (data ?? []).map((c) => ({
+    id: c.id,
+    species: c.species,
+    status: c.status,
+    startDate: c.start_date,
+    endDate: c.end_date,
+  }));
+}
+
 export async function resolveActiveCycleForPond(
   pondId: string,
 ): Promise<ResolveActiveCycleResult> {
