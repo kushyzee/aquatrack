@@ -13,7 +13,7 @@ export default function PondDetailTab({ pondId }: { pondId: string }) {
         <TimelineTab pondId={pondId} />
       </TabsContent>
       <TabsContent value="insights">
-        <InsightsTab />
+        <InsightsTab pondId={pondId} />
       </TabsContent>
     </Tabs>
   );

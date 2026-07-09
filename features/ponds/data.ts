@@ -14,6 +14,102 @@ export interface PondWithCycleStatus {
   currentFishCount: number;
 }
 
+export interface PondInsightsPoint {
+  logDate: string;
+  feedKg: number;
+  mortality: number;
+}
+
+export async function getPondInsights(pondId: string): Promise<{
+  cycleId: string | null;
+  points: PondInsightsPoint[];
+}> {
+  const supabase = await createClient();
+
+  const { data: currentStock, error: stockError } = await supabase
+    .from("pond_current_stock")
+    .select("cycle_id")
+    .eq("pond_id", pondId)
+    .single();
+
+  if (stockError) {
+    console.error(
+      "Error fetching pond current stock for insights:",
+      stockError,
+    );
+    throw new Error(`Failed to fetch pond insights: ${stockError.message}`);
+  }
+
+  let cycleId: string | null = currentStock?.cycle_id ?? null;
+
+  if (!cycleId) {
+    const { data: pondCycles, error: pondCyclesError } = await supabase
+      .from("pond_cycle_stock")
+      .select("cycle_id")
+      .eq("pond_id", pondId);
+
+    if (pondCyclesError) {
+      console.error(
+        "Error fetching pond cycle history for insights:",
+        pondCyclesError,
+      );
+      throw new Error(
+        `Failed to fetch pond insights: ${pondCyclesError.message}`,
+      );
+    }
+
+    const cycleIds = (pondCycles ?? []).map((r) => r.cycle_id);
+
+    if (cycleIds.length > 0) {
+      const { data: mostRecentCompleted, error: completedError } =
+        await supabase
+          .from("production_cycles")
+          .select("id")
+          .in("id", cycleIds)
+          .eq("status", "completed")
+          .order("end_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+      if (completedError) {
+        console.error(
+          "Error resolving most recent completed cycle:",
+          completedError,
+        );
+        throw new Error(
+          `Failed to fetch pond insights: ${completedError.message}`,
+        );
+      }
+
+      cycleId = mostRecentCompleted?.id ?? null;
+    }
+  }
+
+  if (!cycleId) {
+    return { cycleId: null, points: [] };
+  }
+
+  const { data: logs, error: logsError } = await supabase
+    .from("pond_daily_log")
+    .select("log_date, feed_kg_total, mortality_total")
+    .eq("pond_id", pondId)
+    .eq("cycle_id", cycleId)
+    .order("log_date", { ascending: true });
+
+  if (logsError) {
+    console.error("Error fetching daily logs for insights:", logsError);
+    throw new Error(`Failed to fetch pond insights: ${logsError.message}`);
+  }
+
+  const points: PondInsightsPoint[] = (logs ?? []).map((l) => ({
+    logDate: l.log_date,
+    feedKg: Math.round(Number(l.feed_kg_total ?? 0) * 10) / 10,
+    mortality: l.mortality_total ?? 0,
+  }));
+
+  return { cycleId, points };
+}
+
 export async function getPondsWithCycleStatus({
   activeOnly = true,
 }: { activeOnly?: boolean } = {}): Promise<PondWithCycleStatus[]> {
