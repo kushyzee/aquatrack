@@ -1,9 +1,17 @@
 import { formatDate } from "@/lib/utils";
 import CycleStatusBadge from "./CycleStatusBadge";
-import type { CycleSummary } from "@/features/cycles/data";
-import EndCycleDialog from "./EndCycleDialog";
+import type { AvailablePond, CycleSummary } from "@/features/cycles/data";
+import CycleActionsMenu from "./CycleActionsMenu";
 
-export default function CycleDetailHeader({ cycle }: { cycle: CycleSummary }) {
+interface CycleDetailHeaderProps {
+  cycle: CycleSummary;
+  availablePonds: AvailablePond[];
+}
+
+export default function CycleDetailHeader({
+  cycle,
+  availablePonds,
+}: CycleDetailHeaderProps) {
   const isActive = cycle.status === "active";
 
   return (
@@ -22,9 +30,10 @@ export default function CycleDetailHeader({ cycle }: { cycle: CycleSummary }) {
         <div className="flex items-center gap-2">
           <CycleStatusBadge status={cycle.status} />
           {isActive && (
-            <EndCycleDialog
+            <CycleActionsMenu
               cycleId={cycle.cycle_id}
               totalRemaining={cycle.total_remaining}
+              ponds={availablePonds}
             />
           )}
         </div>

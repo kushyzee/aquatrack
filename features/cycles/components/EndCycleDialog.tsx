@@ -12,20 +12,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
 interface EndCycleDialogProps {
   cycleId: string;
   totalRemaining: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export default function EndCycleDialog({
   cycleId,
   totalRemaining,
+  open,
+  onOpenChange,
 }: EndCycleDialogProps) {
-  const [open, setOpen] = useState(false);
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -40,16 +42,13 @@ export default function EndCycleDialog({
       }
 
       toast.success("Cycle ended");
-      setOpen(false);
+      onOpenChange(false);
       router.refresh();
     });
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={<Button variant="outline">End Cycle</Button>}
-      ></DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>End Production Cycle</DialogTitle>
@@ -80,7 +79,7 @@ export default function EndCycleDialog({
         <DialogFooter>
           <Button
             variant="ghost"
-            onClick={() => setOpen(false)}
+            onClick={() => onOpenChange(false)}
             disabled={isPending}
           >
             Cancel

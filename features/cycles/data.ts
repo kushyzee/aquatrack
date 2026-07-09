@@ -7,6 +7,15 @@ export interface AvailablePond {
   pond_name: string;
 }
 
+export interface CycleTransfer {
+  id: string;
+  transfer_date: string;
+  count: number;
+  notes: string | null;
+  from_pond_name: string;
+  to_pond_name: string;
+}
+
 export interface PondCycleBreakdown {
   pond_id: string;
   pond_name: string;
@@ -187,15 +196,6 @@ export async function getPondBreakdownForCycle(
     .sort((a, b) => b.current_fish_count - a.current_fish_count);
 }
 
-export interface CycleTransfer {
-  id: string;
-  transfer_date: string;
-  count: number;
-  notes: string | null;
-  from_pond_name: string;
-  to_pond_name: string;
-}
-
 export async function getTransfersForCycle(
   cycleId: string,
 ): Promise<CycleTransfer[]> {
@@ -228,21 +228,33 @@ export async function getTransfersForCycle(
   }));
 }
 
-export async function getAvailablePondsForStocking(): Promise<AvailablePond[]> {
+export async function getAvailablePondsForCycleStocking(
+  cycleId: string,
+): Promise<AvailablePond[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("pond_current_stock")
-    .select("pond_id, pond_name, status, cycle_id")
-    .eq("status", "active");
+  const [
+    { data: cycleStock, error: cycleStockError },
+    { data: activePonds, error: activeError },
+  ] = await Promise.all([
+    supabase.from("pond_cycle_stock").select("pond_id").eq("cycle_id", cycleId),
+    supabase
+      .from("pond_current_stock")
+      .select("pond_id, pond_name, status, cycle_id")
+      .eq("status", "active"),
+  ]);
 
-  if (error) {
-    console.error(error);
+  if (cycleStockError || activeError) {
+    console.error(cycleStockError ?? activeError);
     return [];
   }
 
-  return (data ?? [])
-    .filter((p) => p.cycle_id == null)
+  const pondsAlreadyInThisCycle = new Set(
+    (cycleStock ?? []).map((row) => row.pond_id),
+  );
+
+  return (activePonds ?? [])
+    .filter((p) => p.cycle_id == null || pondsAlreadyInThisCycle.has(p.pond_id))
     .map((p) => ({ pond_id: p.pond_id, pond_name: p.pond_name }));
 }
 

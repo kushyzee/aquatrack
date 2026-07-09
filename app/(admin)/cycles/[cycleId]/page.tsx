@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import BackButton from "@/components/BackButton";
 import {
+  getAvailablePondsForCycleStocking,
   getCycleById,
   getPondBreakdownForCycle,
   getTransfersForCycle,
@@ -18,10 +19,11 @@ export default async function CycleDetailPage({
 }: CycleDetailPageProps) {
   const { cycleId } = await params;
 
-  const [cycle, breakdown, transfers] = await Promise.all([
+  const [cycle, breakdown, transfers, availablePonds] = await Promise.all([
     getCycleById(cycleId),
     getPondBreakdownForCycle(cycleId),
     getTransfersForCycle(cycleId),
+    getAvailablePondsForCycleStocking(cycleId),
   ]);
 
   if (!cycle) notFound();
@@ -29,7 +31,7 @@ export default async function CycleDetailPage({
   return (
     <div>
       <BackButton href="/cycles" text="Back to Cycles" />
-      <CycleDetailHeader cycle={cycle} />
+      <CycleDetailHeader cycle={cycle} availablePonds={availablePonds} />
       <div className="mt-8 space-y-8">
         <CyclePondBreakdownTable ponds={breakdown} />
         <CycleTransferHistory transfers={transfers} />

@@ -10,6 +10,24 @@ export const cycleStockingSchema = z.object({
     }),
 });
 
+export const addStockSchema = z.object({
+  cycle_id: z.string().uuid(),
+  stocking_date: z
+    .string()
+    .min(1, "Stocking date is required.")
+    .refine((val) => new Date(val) <= new Date(), {
+      message: "Stocking date cannot be in the future.",
+    }),
+  stockings: z
+    .array(cycleStockingSchema)
+    .min(1, "Select at least one pond to stock.")
+    .refine(
+      (stockings) =>
+        new Set(stockings.map((s) => s.pond_id)).size === stockings.length,
+      { message: "Each pond can only be selected once." },
+    ),
+});
+
 export const newCycleSchema = z.object({
   species: z.string().trim().min(1, "Species is required."),
   start_date: z
@@ -38,5 +56,6 @@ export const endCycleSchema = z.object({
     ),
 });
 
+export type AddStockFormValues = z.infer<typeof addStockSchema>;
 export type EndCycleInput = z.infer<typeof endCycleSchema>;
 export type NewCycleFormValues = z.infer<typeof newCycleSchema>;
