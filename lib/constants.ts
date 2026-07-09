@@ -84,14 +84,14 @@ export const navMenu = [
     icon: LayoutDashboard,
   },
   {
-    name: "Ponds",
-    href: "/ponds",
-    icon: Layers,
-  },
-  {
     name: "Cycles",
     href: "/cycles",
     icon: Waves,
+  },
+  {
+    name: "Ponds",
+    href: "/ponds",
+    icon: Layers,
   },
   {
     name: "Daily Logs",
