@@ -43,6 +43,93 @@ export interface CycleLabel {
   endDate: string | null;
 }
 
+export interface FromPondOption {
+  pond_id: string;
+  pond_name: string;
+  pond_code: string | null;
+  current_fish_count: number;
+}
+
+export interface ToPondOption {
+  pond_id: string;
+  pond_name: string;
+  pond_code: string | null;
+  eligible: boolean;
+  blockedReason: string | null;
+}
+
+export async function getFromPondOptionsForCycle(
+  cycleId: string,
+): Promise<FromPondOption[]> {
+  const supabase = await createClient();
+
+  const { data: stockRows, error: stockError } = await supabase
+    .from("pond_cycle_stock")
+    .select("pond_id, current_fish_count")
+    .eq("cycle_id", cycleId)
+    .gt("current_fish_count", 0);
+
+  if (stockError) {
+    console.error(stockError);
+    return [];
+  }
+
+  if (!stockRows || stockRows.length === 0) return [];
+
+  const pondIds = stockRows.map((row) => row.pond_id);
+
+  const { data: ponds, error: pondsError } = await supabase
+    .from("ponds")
+    .select("id, name, code")
+    .in("id", pondIds);
+
+  if (pondsError) {
+    console.error(pondsError);
+    return [];
+  }
+
+  const pondMap = new Map((ponds ?? []).map((p) => [p.id, p]));
+
+  return stockRows.map((row) => {
+    const pond = pondMap.get(row.pond_id);
+    return {
+      pond_id: row.pond_id,
+      pond_name: pond?.name ?? "Unknown pond",
+      pond_code: pond?.code ?? null,
+      current_fish_count: row.current_fish_count,
+    };
+  });
+}
+
+export async function getToPondOptionsForCycle(
+  cycleId: string,
+): Promise<ToPondOption[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("pond_current_stock")
+    .select("pond_id, pond_name, pond_code, status, cycle_id, species")
+    .eq("status", "active");
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return (data ?? []).map((pond) => {
+    const eligible = pond.cycle_id === null || pond.cycle_id === cycleId;
+    return {
+      pond_id: pond.pond_id,
+      pond_name: pond.pond_name,
+      pond_code: pond.pond_code,
+      eligible,
+      blockedReason: eligible
+        ? null
+        : `Holds an active ${pond.species ?? "other"} cycle`,
+    };
+  });
+}
+
 export async function getCyclesByIds(
   cycleIds: string[],
 ): Promise<CycleLabel[]> {

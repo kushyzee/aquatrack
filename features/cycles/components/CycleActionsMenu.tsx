@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { EllipsisVertical } from "lucide-react";
+import { EllipsisVertical, Send } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +12,8 @@ import {
 import EndCycleDialog from "./EndCycleDialog";
 import AddStockDialog from "./AddStockDialog";
 import type { AvailablePond } from "@/features/cycles/data";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface CycleActionsMenuProps {
   cycleId: string;
@@ -30,22 +32,34 @@ export default function CycleActionsMenu({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger className={buttonVariants({ variant: "outline" })}>
-          <EllipsisVertical />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setActiveDialog("addStock")}>
-            Add Stock
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setActiveDialog("endCycle")}
-            variant="destructive"
+      <div className="flex items-center gap-2">
+        <Link
+          href={`/cycles/${cycleId}/transfer`}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          <Send />
+          <span className="hidden sm:block">New Transfer</span>
+        </Link>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={buttonVariants({ variant: "outline" })}
           >
-            End Cycle
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <EllipsisVertical />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setActiveDialog("addStock")}>
+              Add Stock
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setActiveDialog("endCycle")}
+              variant="destructive"
+            >
+              End Cycle
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <AddStockDialog
         cycleId={cycleId}

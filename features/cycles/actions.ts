@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { addStockSchema, newCycleSchema } from "./schema";
+import { addStockSchema, newCycleSchema, transferStockSchema } from "./schema";
 import { revalidatePath } from "next/cache";
 import { endCycleSchema } from "./schema";
 
@@ -142,5 +142,87 @@ export async function addStockToCycleAction(input: {
     return { error: "An unexpected error occurred. Please try again." };
   }
 
+  return { success: true };
+}
+
+export async function transferStockAction(input: unknown) {
+  const parsed = transferStockSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  const { cycleId, fromPondId, toPondId, count, transferDate, notes } =
+    parsed.data;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      success: false,
+      error: "You must be signed in to record a transfer.",
+    };
+  }
+
+  const { data: fromStock, error: fromStockError } = await supabase
+    .from("pond_cycle_stock")
+    .select("current_fish_count")
+    .eq("cycle_id", cycleId)
+    .eq("pond_id", fromPondId)
+    .maybeSingle();
+
+  if (fromStockError || !fromStock) {
+    return {
+      success: false,
+      error: "Could not verify stock for the source pond.",
+    };
+  }
+
+  if (count > fromStock.current_fish_count) {
+    return {
+      success: false,
+      error: `Only ${fromStock.current_fish_count} fish remain in the source pond for this cycle.`,
+    };
+  }
+
+  const { data: toPond, error: toPondError } = await supabase
+    .from("pond_current_stock")
+    .select("status, cycle_id")
+    .eq("pond_id", toPondId)
+    .maybeSingle();
+
+  if (toPondError || !toPond) {
+    return { success: false, error: "Could not verify the destination pond." };
+  }
+
+  if (toPond.status !== "active") {
+    return { success: false, error: "The destination pond is not active." };
+  }
+
+  if (toPond.cycle_id !== null && toPond.cycle_id !== cycleId) {
+    return {
+      success: false,
+      error:
+        "The destination pond already holds stock from a different active cycle.",
+    };
+  }
+
+  const { error: insertError } = await supabase.from("stock_transfers").insert({
+    cycle_id: cycleId,
+    from_pond_id: fromPondId,
+    to_pond_id: toPondId,
+    count,
+    transfer_date: transferDate,
+    notes: notes || null,
+    created_by: user.id,
+  });
+
+  if (insertError) {
+    return { success: false, error: insertError.message };
+  }
+
+  revalidatePath(`/cycles/${cycleId}`);
   return { success: true };
 }

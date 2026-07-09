@@ -29,7 +29,7 @@ export const PondSchema = z.object({
 });
 
 export const updatePondStatusSchema = z.object({
-  pondId: z.uuid(),
+  pondId: z.uuid({ message: "Invalid pond ID" }),
   status: z.enum(["active", "inactive", "archived"]),
 });
 

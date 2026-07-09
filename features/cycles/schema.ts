@@ -11,7 +11,7 @@ export const cycleStockingSchema = z.object({
 });
 
 export const addStockSchema = z.object({
-  cycle_id: z.string().uuid(),
+  cycle_id: z.uuid({ message: "Invalid cycle ID" }),
   stocking_date: z
     .string()
     .min(1, "Stocking date is required.")
@@ -56,6 +56,29 @@ export const endCycleSchema = z.object({
     ),
 });
 
+export const transferStockSchema = z
+  .object({
+    cycleId: z.uuid({ message: "Invalid cycle ID" }),
+    fromPondId: z.uuid({ message: "Please select a source pond" }),
+    toPondId: z.uuid({ message: "Please select a destination pond" }),
+    count: z.coerce
+      .number()
+      .int()
+      .positive({ message: "Count must be a positive whole number." }),
+    transferDate: z
+      .string()
+      .refine(
+        (d) => new Date(d) <= new Date(),
+        "Transfer date can't be in the future",
+      ),
+    notes: z.string().optional(),
+  })
+  .refine((data) => data.fromPondId !== data.toPondId, {
+    message: "From and To ponds must be different",
+    path: ["toPondId"],
+  });
+
+export type TransferStockInput = z.infer<typeof transferStockSchema>;
 export type AddStockFormValues = z.infer<typeof addStockSchema>;
 export type EndCycleInput = z.infer<typeof endCycleSchema>;
 export type NewCycleFormValues = z.infer<typeof newCycleSchema>;
