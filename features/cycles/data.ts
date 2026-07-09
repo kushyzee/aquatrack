@@ -228,6 +228,24 @@ export async function getTransfersForCycle(
   }));
 }
 
+export async function getAvailablePondsForStocking(): Promise<AvailablePond[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("pond_current_stock")
+    .select("pond_id, pond_name, status, cycle_id")
+    .eq("status", "active");
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return (data ?? [])
+    .filter((p) => p.cycle_id == null)
+    .map((p) => ({ pond_id: p.pond_id, pond_name: p.pond_name }));
+}
+
 export async function getAvailablePondsForCycleStocking(
   cycleId: string,
 ): Promise<AvailablePond[]> {
